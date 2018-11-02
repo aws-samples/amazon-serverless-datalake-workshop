@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: A serverless datalake workshop.
+Resources:
+  IngestionBucket:
+    Type: AWS::S3::Bucket
+  ApacheLogsServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}_weblog_delivery_role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole
+  ApacheLogsRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AWS::StackName}_weblog_delivery_policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:*'
+            Resource:
+              - !Sub '${IngestionBucket.Arn}/*'
+              - !Sub '${IngestionBucket.Arn}'
+      Roles:
+        - !Ref 'ApacheLogsServiceRole'
+  LoadSampleDataFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: load-data-files.lambda_handler
+      Runtime: python2.7
+      Description: ''
+      MemorySize: 512
+      Timeout: 240
+      Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref IngestionBucket
+      CodeUri: ./src
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref IngestionBucket
+  LoadSampleData:
+    Type: Custom::ESName
+    DependsOn:
+      - IngestionBucket
+    Properties: 
+      ServiceToken: !GetAtt LoadSampleDataFunction.Arn
+      StackName: !Ref AWS::StackName
+
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      DatabaseInput: 
+        Name: !Ref AWS::StackName
+      CatalogId: !Ref AWS::AccountId
+
+  GlueProfileTable:
+    Type: AWS::Glue::Table
+    Properties:
+      TableInput:
+        Name: user-profile
+        Description: The User Profile Table
+        TableType: EXTERNAL_TABLE
+        Parameters: {
+    "classification": "csv"
+  }
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Columns: 
+          - Name: id
+            Type: bigint
+          - Name: first_name
+            Type: string
+          - Name: last_name
+            Type: string
+          - Name: username
+            Type: string      
+          - Name: email
+            Type: string
+          - Name: gender
+            Type: string
+          - Name: ip_address
+            Type: string   
+          - Name: phone
+            Type: string      
+          - Name: zip
+            Type: string
+          - Name: cc
+            Type: string
+          - Name: password
+            Type: string   
+          - Name: ssn
+            Type: string   
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          Location: !Sub s3://${IngestionBucket}/profile/
+          SerdeInfo:
+            Parameters:
+              field.delim: ","
+            SerializationLibrary: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+      DatabaseName: !Ref AWS::StackName
+      CatalogId: !Ref AWS::AccountId
+
+Outputs:
+  IngestionBucket:
+    Description: The password for the kibana user
+    Value: !Ref IngestionBucket
