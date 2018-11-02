@@ -1,6 +1,3 @@
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-<script src="/workshop.js"></script>
-
 # Serverless Data Lake Workshop
 Welcome to the serverless data lake workshop. In this workshop, you will create a serverless data lake that combines the data from an ecommerce website, customer profile database, and demographic data.
 
