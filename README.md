@@ -39,6 +39,8 @@ By storing the data on Amazon S3, you have a cost-effective service that can sto
 
 Here is the Amazon CloudFormation script that the cloud engineering team made available. <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverless-data-lake.yaml" target="_blank">Create a stack</a> This template will provide a headstart in configuring the data lake.
 
+[Annotated CloudFormation Template ](serverlessdatalake2018.md)
+
 ## Serverless Data Lake Components
 * S3
 * DynamoDb
@@ -968,7 +970,8 @@ Once the query is run, you can look at the list of tables in Athena and see this
 1. Run athena query against Customer with user1 and user2
 1. Run athena query against CustomerRestricted with user1 and user2
 
-
+### Live Data Feed
+What about the data from the Kinesis stream? That is being written to the s3://ingestionbucket/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
 
 ## Bonus Lab Exercise 
 ### Configure Zeppelin Notebook Server
@@ -1015,4 +1018,7 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 1. You will get an error due to a self-signed SSL certificate. This is expected. Depending on the browser, o make an exception.
 1. In the upper right, click Login. User is 'admin' and password was supplied when configuring the notebook server.
 
+# Clean Up
+
+Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
 
