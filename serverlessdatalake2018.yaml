@@ -4,6 +4,75 @@ Description: A serverless datalake workshop.
 Resources:
   IngestionBucket:
     Type: AWS::S3::Bucket
+  ApacheLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub /${AWS::StackName}/apache
+      RetentionInDays: 1
+  ApacheLogsKinesis:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    DependsOn: GenerateSampleDataFunction
+    Properties: 
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        RoleARN: !GetAtt ApacheLogsServiceRole.Arn
+        BucketARN: !GetAtt IngestionBucket.Arn
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 3
+        CloudWatchLoggingOptions:
+          Enabled: False
+        CompressionFormat: UNCOMPRESSED
+        Prefix: weblogs/
+        ProcessingConfiguration:
+          Enabled: true
+          Processors: 
+          - Type: Lambda
+            Parameters:
+            - ParameterName: LambdaArn
+              ParameterValue: !Sub ${TransformKinesis.Arn}
+            - ParameterName: BufferSizeInMBs
+              ParameterValue: 3
+            - ParameterName: BufferIntervalInSeconds
+              ParameterValue: 60
+            
+  CloudWatchLogsToKinesis:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties: 
+      DestinationArn: !Sub ${ApacheLogsKinesis.Arn}
+      FilterPattern: ""
+      LogGroupName: !Sub ${ApacheLogs}
+      RoleArn: !Sub ${LogsToKinesisServiceRole.Arn}
+  LogsToKinesisServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}_logs_kinesis_role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub logs.${AWS::Region}.amazonaws.com
+            Action: sts:AssumeRole
+  LogsToKinesisRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AWS::StackName}_logs_kineis_policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'firehose:*'
+            Resource:
+              - !Sub '${ApacheLogsKinesis.Arn}'
+          - Effect: Allow
+            Action:
+              - 'iam:PassRole'
+            Resource:
+              - !Sub '${LogsToKinesisServiceRole.Arn}'
+      Roles:
+        - !Ref 'LogsToKinesisServiceRole'
   ApacheLogsServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -28,8 +97,40 @@ Resources:
             Resource:
               - !Sub '${IngestionBucket.Arn}/*'
               - !Sub '${IngestionBucket.Arn}'
+          - Effect: Allow
+            Action: 
+                - 'lambda:InvokeFunction'
+                - 'lambda:InvokeAsync'
+            Resource:
+              - !Sub '${TransformKinesis.Arn}'
       Roles:
         - !Ref 'ApacheLogsServiceRole'
+  TransformKinesis:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: transformKinesis.handler
+      Runtime: python2.7
+      Description: ''
+      MemorySize: 512
+      Timeout: 60
+      CodeUri: ./src
+  GenerateSampleDataFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: writelogs.lambda_handler
+      Runtime: python2.7
+      Description: ''
+      MemorySize: 512
+      Timeout: 60
+      CodeUri: ./src
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+      Environment:
+        Variables:
+          LOG_GROUP_NAME: !Sub /${AWS::StackName}/apache
   LoadSampleDataFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -45,13 +146,6 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref IngestionBucket
-  LoadSampleData:
-    Type: Custom::ESName
-    DependsOn:
-      - IngestionBucket
-    Properties: 
-      ServiceToken: !GetAtt LoadSampleDataFunction.Arn
-      StackName: !Ref AWS::StackName
 
   GlueDatabase:
     Type: AWS::Glue::Database
@@ -105,8 +199,18 @@ Resources:
             SerializationLibrary: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
       DatabaseName: !Ref AWS::StackName
       CatalogId: !Ref AWS::AccountId
+  LoadSampleData:
+    Type: Custom::LoadSampleData
+    DependsOn:
+      - IngestionBucket
+    Properties: 
+      ServiceToken: !GetAtt LoadSampleDataFunction.Arn
+      StackName: !Ref AWS::StackName
 
 Outputs:
+  WeblogCloudwatch:
+    Description: The location in cloudwatch where log files from the web are being written
+    Value: !Sub /aws/lambda/${GenerateSampleDataFunction}
   IngestionBucket:
-    Description: The password for the kibana user
+    Description: The bucket that stores the ingestion data from the relational databases and historical weblogs
     Value: !Ref IngestionBucket
