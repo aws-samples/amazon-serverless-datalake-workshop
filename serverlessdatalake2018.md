@@ -221,6 +221,8 @@ This is lambda function that provides the functionality for the LoadSampleData c
 #### LoadSampleData
 This is a custom CloudFormation resource the pre-populates the sample data and cleans up the IngestionBucket when the stack is turned off.
 
+It also uploads the lab instructions to the bucket and will substitute the actual bucket name into the instructions in order to reduce the number of copy and paste errors.
+
 ```YAML 
   LoadSampleData:
     Type: Custom::LoadSampleData
@@ -232,14 +234,11 @@ This is a custom CloudFormation resource the pre-populates the sample data and c
 ```
 
 #### Outputs
-These outputs are displayed in the AWS console after the stack has been created.
+These outputs are displayed in the AWS console after the stack has been created. The WorkshopInstructionsUrl is a link to the customized instructions for this workshop. 
 
 ```YAML
 Outputs:
-  WeblogCloudwatch:
-    Description: The location in cloudwatch where log files from the web are being written
-    Value: !Sub /aws/lambda/${GenerateSampleDataFunction}
-  IngestionBucket:
-    Description: The bucket that stores the ingestion data from the relational databases and historical weblogs
-    Value: !Ref IngestionBucket
+  WorkshopInstructionsUrl:
+    Description: Follow the link for the instructions for the serverless datalake workshop.
+    Value: !Sub https://s3.${AWS::Region}.amazonaws.com/${IngestionBucket}/instructions/instructions.html
 ```

@@ -10,6 +10,7 @@ import hashlib
 import os
 
 s3_client = boto3.client('s3')
+s3 = boto3.resource('s3')
 
 def lambda_handler(event, context):
     try:
@@ -80,6 +81,7 @@ def copy_files(event, context):
     print("Received event: " + json.dumps(event, indent=2))
     
     bucket = os.environ['BUCKET_NAME']
+    sourceBucket = os.environ['SOURCE_BUCKET_NAME']
 
     response = s3_client.copy_object(
         Bucket=bucket,
@@ -98,6 +100,16 @@ def copy_files(event, context):
         CopySource={'Bucket': 'arc326-instructions', 'Key': 'sample-data/userprofile.csv'},
         Key='raw/userprofile/userprofile.csv'
     )
+
+    src = s3.Object(sourceBucket, 'instructions/instructions-template.html')
+    html = src.get()['Body'].read().decode('utf-8') 
+
+    html = html.replace('%ingestionbucket%', bucket)
+
+    destination = s3.Object(bucket, 'instructions/instructions.html')
+    result = destination.put(Body=html, ACL='public-read', ContentDisposition='inline', ContentType='text/html')
+
+
     return "Success"
 
 def send_response(request, response, status=None, reason=None):

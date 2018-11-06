@@ -140,13 +140,19 @@ Resources:
       MemorySize: 512
       Timeout: 240
       Policies:
-      - S3CrudPolicy:
-          BucketName: !Ref IngestionBucket
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - 's3:*'
+          Resource:
+          - !Sub '${IngestionBucket.Arn}/*'
+          - !Sub '${IngestionBucket.Arn}'
       CodeUri: ./src
       Environment:
         Variables:
           BUCKET_NAME: !Ref IngestionBucket
-
+          SOURCE_BUCKET_NAME: arc326-instructions
   LoadSampleData:
     Type: Custom::LoadSampleData
     DependsOn:
@@ -156,9 +162,6 @@ Resources:
       StackName: !Ref AWS::StackName
 
 Outputs:
-  WeblogCloudwatch:
-    Description: The location in cloudwatch where log files from the web are being written
-    Value: !Sub /aws/lambda/${GenerateSampleDataFunction}
-  IngestionBucket:
-    Description: The bucket that stores the ingestion data from the relational databases and historical weblogs
-    Value: !Ref IngestionBucket
+  WorkshopInstructionsUrl:
+    Description: Follow the link for the instructions for the serverless datalake workshop.
+    Value: !Sub https://s3.${AWS::Region}.amazonaws.com/${IngestionBucket}/instructions/instructions.html
