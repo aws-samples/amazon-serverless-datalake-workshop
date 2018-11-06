@@ -973,7 +973,7 @@ Once the query is run, you can look at the list of tables in Athena and see this
 ### Live Data Feed
 What about the data from the Kinesis stream? That is being written to the s3://ingestionbucket/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
 
-## Bonus Lab Exercise 
+## Bonus Lab Exercise - Advanced AWS Users
 ### Configure Zeppelin Notebook Server
 **Note: Configuring a Zeppeling Server is optional in this workshop.**
 
