@@ -76,7 +76,7 @@ Amazon Kinesis Data Firehose is the easiest way to load streaming data into data
 Relational database systems form the backbone of most enterprise data systems. The data lake will receive data from the relational databases on a periodic basis, either through a data stream such as Kinesis Firehouse, 3rd-party tools like Sqoop, or through change data capture (CDC) using Amazon Satabase Migration Service (DMS). These data changes will be pushed into the ingestion buckets in the data lake for later processing. In this lab, we will copy data into S3 to simulate the ingestion of data from a CDC service like DMS. 
 
 ## Third Party Data
-Frequently data that comes from outside the organization will be valuable to integrate into the data lake. In this example, demographic data from the US Census bureau will be included in the data for analysis. The data will be staged into S3 during startup by the CloudFormation script, but this data can be source through a variety of channels.
+Frequently data that comes from outside the organization will be valuable to integrate into the data lake. In this example, demographic data from the US Census bureau curated by a thrid party will be included in the data for analysis. The data will be staged into S3 during startup by the CloudFormation script, but this data can be sourced through a variety of channels.
 
 # Data Catalog
 ## Glue Data Catalog

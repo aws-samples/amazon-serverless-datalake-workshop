@@ -3,4 +3,5 @@ env.json
 deploy.sh
 packaged.yaml
 sampleevent.json
+.vscode/*
 

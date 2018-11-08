@@ -1006,14 +1006,14 @@ profiles = [{"ip":"34.209.30.165", "username":"mphillpottslx"},
 
 requestUrls = ["GET /petstore/Fish/Feeders",
                "GET /petstore/Cats/DryFood",
-               "GET /petstore/Brid/Etc",
+               "GET /petstore/Bird/Etc",
                "GET /petstore/Dogs/DryFood",
                "GET /petstore/Dogs/CannedFood",
                "GET /petstore/Fish/PlantCare",
                "GET /petstore/Fish/Food",
                "GET /petstore/Cats/WetFood",
-               "GET /petstore/Brid/Treats",
-               "GET /petstore/Brid/Food",
+               "GET /petstore/Bird/Treats",
+               "GET /petstore/Bird/Food",
                "GET /petstore/Dogs/FoodToppers",
                "GET /petstore/Cats/Treats"]
 

@@ -34,7 +34,7 @@ We will verify that the log files are moving from the cloudwatch logs to the S3 
 1. **DeliveryToS3 Bytes**: The number of bytes written to S3.
 1. Click the Details Tab at the top.
 1. Find the 'Amazon S3 destination' section and click the link for the S3 bucket.
-1. Click 'Weblogs'
+1. Click 'weblogs'
 1. Drill down into today's date & time and choose a file. The files will be stored in UTC time.
 1. Click 'Open' and open the file in a text editor
 1. It should contain the IP, username, timestamp, request path, and bytes downloaded.
@@ -103,8 +103,8 @@ Zipcode | ZipCodeType | City	 |  State  |   LocationType  |	Lat | Long | Locatio
 ----------| ----- | -------- | ---------- | ------------- | --------- | ---------- | ------------- | ---------
 705 |	STANDARD |	AIBONITO |	PR |	PRIMARY |	18.14 |	-66.26 |	NA-US-PR-AIBONITO |	FALSE
 610 |	STANDARD |	ANASCO |	PR |	PRIMARY	| 18.28 |	-67.14 |	NA-US-PR-ANASCO |	FALSE
-611 |	PO BOX |	ANGELES	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	FALSE
-612 |	STANDARD |	ARECIBO	PR |	PRIMARY |	18.45	| -66.73 |	NA-US-PR-ARECIBO |	FALSE
+611 |	PO BOX |	ANGELES |	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	FALSE
+612 |	STANDARD |	ARECIBO |	PR |	PRIMARY |	18.45	| -66.73 |	NA-US-PR-ARECIBO |	FALSE
 
 
 The third data set that we have is user profiles data in `userprofile.csv` file. The data is in CSV format like below:
