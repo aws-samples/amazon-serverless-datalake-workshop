@@ -104,7 +104,7 @@ def copy_files(event, context):
     src = s3.Object(sourceBucket, 'instructions/instructions-template.html')
     html = src.get()['Body'].read().decode('utf-8') 
 
-    html = html.replace('%ingestionbucket%', bucket)
+    html = html.replace('~ingestionbucket~', bucket)
 
     destination = s3.Object(bucket, 'instructions/instructions.html')
     result = destination.put(Body=html, ACL='public-read', ContentDisposition='inline', ContentType='text/html')

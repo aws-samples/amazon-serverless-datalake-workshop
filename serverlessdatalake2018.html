@@ -265,6 +265,7 @@
 <h4>
 <a id="user-content-loadsampledata" class="anchor" href="#loadsampledata" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>LoadSampleData</h4>
 <p>This is a custom CloudFormation resource the pre-populates the sample data and cleans up the IngestionBucket when the stack is turned off.</p>
+<p>It also uploads the lab instructions to the bucket and will substitute the actual bucket name into the instructions in order to reduce the number of copy and paste errors.</p>
 <div class="highlight highlight-source-yaml"><pre>  <span class="pl-ent">LoadSampleData</span>:
     <span class="pl-ent">Type</span>: <span class="pl-s">Custom::LoadSampleData</span>
     <span class="pl-ent">DependsOn</span>:
@@ -274,11 +275,11 @@
       <span class="pl-ent">StackName</span>: <span class="pl-s">!Ref AWS::StackName</span></pre></div>
 <h4>
 <a id="user-content-outputs" class="anchor" href="#outputs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Outputs</h4>
-<p>These outputs are displayed in the AWS console after the stack has been created.</p>
+<p>These outputs are displayed in the AWS console after the stack has been created. The WorkshopInstructionsUrl is a link to the customized instructions for this workshop.</p>
 <div class="highlight highlight-source-yaml"><pre><span class="pl-ent">Outputs</span>:
-  <span class="pl-ent">IngestionBucket</span>:
-    <span class="pl-ent">Description</span>: <span class="pl-s">The bucket that stores the ingestion data from the relational databases and historical weblogs</span>
-    <span class="pl-ent">Value</span>: <span class="pl-s">!Ref IngestionBucket</span></pre></div>
+  <span class="pl-ent">WorkshopInstructionsUrl</span>:
+    <span class="pl-ent">Description</span>: <span class="pl-s">Follow the link for the instructions for the serverless datalake workshop.</span>
+    <span class="pl-ent">Value</span>: <span class="pl-s">!Sub https://s3.${AWS::Region}.amazonaws.com/${IngestionBucket}/instructions/instructions.html</span></pre></div>
 
               </article>
             </div>

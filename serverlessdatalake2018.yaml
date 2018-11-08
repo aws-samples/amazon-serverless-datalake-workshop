@@ -146,8 +146,7 @@ Resources:
           Action:
           - 's3:*'
           Resource:
-          - !Sub '${IngestionBucket.Arn}/*'
-          - !Sub '${IngestionBucket.Arn}'
+          - '*'
       CodeUri: ./src
       Environment:
         Variables:

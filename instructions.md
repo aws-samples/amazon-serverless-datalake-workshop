@@ -74,9 +74,9 @@ Below are the datasets that we would be working with:
 These datasets are downloaded into the S3 bucket at:
 
 ```
- s3://%ingestionbucket%/raw/useractivity
- s3://%ingestionbucket%/raw/userprofile
- s3://%ingestionbucket%/raw/zipcodes
+ s3://~ingestionbucket~/raw/useractivity
+ s3://~ingestionbucket~/raw/userprofile
+ s3://~ingestionbucket~/raw/zipcodes
 ```
 
 ## Create an IAM Role
@@ -138,7 +138,7 @@ AWS Glue crawler will create the following tables in the `weblogs` database:
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `rawdatacrawler`, keep the defaults on the page the same and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://%ingestionbucket%/raw` S3 bucket location from **Include path**.
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/raw` S3 bucket location from **Include path**.
 5. Expand **Exclude patterns (optional)** section and enter `zipcodes/**` in **Exclude patterns** text box (We will exclude the zipcodes file in this exercise and pick it up latter in the lab). Click **Next** button
 6. Choose **No** and click **Next** on **Add another data store**
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
@@ -182,7 +182,7 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose `Amazon S3` from **Data store** drop down
 	 - Choose `Parquet` from **Format** drop down
-	 - From **Target path** choose `%ingestionbucket%/weblogs/useractivityconverted` S3 bucket and click **Next** button
+	 - From **Target path** choose `~ingestionbucket~/weblogs/useractivityconverted` S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The system created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -253,7 +253,7 @@ dataframe0 = dataframe0.withColumn('month', month(from_unixtime(unix_timestamp('
 ## @ convert dataframe to glue DynamicFrame and write the output in parquet format partitioned on toppapge column
 useractivity = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
 
-writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": "s3://%ingestionbucket%/weblogs/useractivityconverted", "partitionKeys" :["toppage"]}, format = "parquet", transformation_ctx = "writeUseractivityToS3")
+writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": 's3://~ingestionbucket~/weblogs/useractivityconverted', "partitionKeys" :["toppage"]}, format = "parquet", transformation_ctx = "writeUseractivityToS3")
 
 job.commit()
 ```
@@ -265,7 +265,7 @@ job.commit()
 7. Select **X** from the top-right corner to close **Edit Script** page. This will take you back to **Jobs** dashboard
 8. From jobs table select the job `useractivityjob` to open the detail tabs for the job.
 9. Under **History** tab, monitor the **Run status**. The **Run Status** column should go from *Running* to *Stopping* to *Succeeded*
-10. Once the job is succeeded, go to S3 console and browse to `%ingestionbucket%/weblogs/useractivityconverted` S3 bucket
+10. Once the job is succeeded, go to S3 console and browse to `~ingestionbucket~/weblogs/useractivityconverted` S3 bucket
 11. Under the `useractivityconverted` S3 folder you should see parquet files created by the job, partitioned by `toppage` column.
 
 #### Explore the new dataset that we created in previous step
@@ -274,7 +274,7 @@ job.commit()
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `useractivityconvertedcrawler`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://%ingestionbucket%/weblogs/useractivityconverted` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/weblogs/useractivityconverted` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -418,7 +418,7 @@ You will work with `useractivity` and `userprofile` datasets, the table definiti
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from **Data store** drop down
 	 - Choose **Parquet** from **Format** drop down
-	 - From **Target path** choose `%ingestionbucket%/weblogs/joindatasets` S3 bucket and click **Next** button
+	 - From **Target path** choose `~ingestionbucket~/weblogs/joindatasets` S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -483,7 +483,7 @@ joined = Join.apply(userprofile, useractivity, 'dy_username', 'username').drop_f
 
 glueContext.write_dynamic_frame.from_options(frame = joined,
           connection_type = "s3",
-          connection_options = {"path": "s3://%ingestionbucket%/weblogs/joindatasets"},
+          connection_options = {"path": 's3://~ingestionbucket~/weblogs/joindatasets'},
           format = "parquet")
 
 job.commit()
@@ -496,7 +496,7 @@ job.commit()
 7. Select **X** from the right corner to close **Edit Script** page. This will take you back to **Jobs** dashboard
 8. From jobs table select the job `joindatasetsjob` to open the detail tabs for the job.
 9. Under **History** tab, monitor the *Run status*. The *Run Status* column should go from "Running" to "Stopping" to "Succeeded"
-10. Once the job is succeeded, go to S3 console and browse to `%ingestionbucket%/weblogs/joindatasets` S3 bucket
+10. Once the job is succeeded, go to S3 console and browse to `~ingestionbucket~/weblogs/joindatasets` S3 bucket
 11. Under the `joindatasets` S3 folder you should see parquet files created by the job
 
 #### Explore the new dataset created in previous step 
@@ -505,7 +505,7 @@ job.commit()
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `joindatasetscrawler`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://%ingestionbucket%/weblogs/joindatasets` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/weblogs/joindatasets` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -525,7 +525,7 @@ In previous sections we saw how Athena can leverage AWS Glue Data Catalog. In th
 For this exercise we will use the zip code to city and state mapping from below S3 bucket
 
 ```
-  s3://%ingestionbucket%/raw/zipcodes
+  s3://~ingestionbucket~/raw/zipcodes
 
 ```
 > Note: The above dataset is listed [here](http://federalgovernmentzipcodes.us/)
@@ -573,7 +573,7 @@ WITH SERDEPROPERTIES (
   'separatorChar'=',') 
 STORED AS TEXTFILE
 LOCATION
-  's3://%ingestionbucket%/raw/zipcodes'
+  's3://~ingestionbucket~/raw/zipcodes'
 TBLPROPERTIES ("skip.header.line.count"="1")
 
 ```
@@ -756,7 +756,7 @@ In order to protect sensative data, we will want to eliminate columns or hash se
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from **Data store** drop down
 	 - Choose **Parquet** from **Format** drop down
-	 - From **Target path** choose `%ingestionbucket%/weblogs/userprofile-secure` S3 bucket and click **Next** button
+	 - From **Target path** choose `~ingestionbucket~/weblogs/userprofile-secure` S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -806,7 +806,7 @@ dataframe0 = dataframe0.drop('cc').drop('ssn').drop('password')
 datasource1 = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
 
 
-datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": "s3://%ingestionbucket%/weblogs/userprofile-secure"}, format = "parquet", transformation_ctx = "datasink4")
+datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": 's3://~ingestionbucket~/weblogs/userprofile-secure'}, format = "parquet", transformation_ctx = "datasink4")
 
 job.commit()
 ```
@@ -817,7 +817,7 @@ job.commit()
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `userprofile-secure`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://%ingestionbucket%/weblogs/userprofile-secure` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/weblogs/userprofile-secure` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -843,12 +843,12 @@ The simplest way to convert a table into a more efficient format is to user the 
 
 1. In the Athena console, click create a new query, the + icon next to the query tab.
 1. Copy and paste the following: <br/>
-<pre><code>
+```SQL
 CREATE TABLE IF NOT EXISTS userprofileparquet
   WITH (format='PARQUET', 
   		parquet_compression='SNAPPY', 
   		partitioned_by=ARRAY['age'], 
-  		external_location='s3://%ingestionbucket%/weblogs/ctas-sample') AS
+  		external_location='s3://~ingestionbucket~/weblogs/ctas-sample') AS
 	SELECT first_name, 
 		   last_name, 
 		   username, 
@@ -858,19 +858,18 @@ CREATE TABLE IF NOT EXISTS userprofileparquet
 		   zip,
 		   age
 	FROM "weblogs"."userprofile"
-</code></pre>
-
+```
 Once the query is run, you can look at the list of tables in Athena and see this table has been added, including the partitions.
 
 
 #### Extra Credit - Test Role Based Access
 
-1. Create 2 new users, one has access to s3://%ingestionbucket%/prepared/userprofile-secure, one does not.
+1. Create 2 new users, one has access to s3://~ingestionbucket~/prepared/userprofile-secure, one does not.
 1. Run athena query against Customer with user1 and user2
 1. Run athena query against CustomerRestricted with user1 and user2
 
 ### Live Data Feed
-What about the data from the Kinesis stream? That is being written to the s3://%ingestionbucket%/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
+What about the data from the Kinesis stream? That is being written to the s3://~ingestionbucket~/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
 
 ## Bonus Lab Exercise - Advanced AWS Users
 ### Configure Zeppelin Notebook Server
@@ -901,7 +900,7 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 1. KeyPair: Select the key pair from the prequisites
 1. Attach a Public IP (True)
 1. Notebook Username: Admin
-1. Notebook S3 Path: s3://*%ingestionbucket%*/admin
+1. Notebook S3 Path: s3://*~ingestionbucket~*/admin
 1. Subnet: Pick a public subnet. Not sure which subnet is public? <a href="https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:sort=SubnetId" target="_blank">Subnet Console<a> Look at the Route Table tab of the subnet and see if the route to 0.0.0.0/0 starts with igw.
 1. Click Finish. This will kick off a cloud formation script that builds out the notebook server.
 1. After the notebook server is created, its status changes to CREATE_COMPLETE in the CloudFormation console. Example the Resources section and click the link by the 'Zeppelin Instance' resource.
