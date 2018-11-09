@@ -80,7 +80,7 @@ These datasets are downloaded into the S3 bucket at:
 ```
 
 ## Create an IAM Role
-Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role. 
+Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role. For role permission make sure you select both AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
 
 > In the Lab guide **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name then please substitute your role name for **AWSGlueServiceRoleDefault**
 
@@ -530,14 +530,14 @@ For this exercise we will use the zip code to city and state mapping from below 
 ```
 > Note: The above dataset is listed [here](http://federalgovernmentzipcodes.us/)
 
-The `zipcodedatabase.csv` file contains data in CSV format like below:
+The `zipcodedata.csv` file contains data in CSV format like below:
 
 Zipcode | ZipCodeType | City	 |  State  |   LocationType  |	Lat | Long | Location | Decommisioned 
 ----------| ----- | -------- | ---------- | ------------- | --------- | ---------- | ------------- | ---------
 705 |	STANDARD |	AIBONITO |	PR |	PRIMARY |	18.14 |	-66.26 |	NA-US-PR-AIBONITO |	FALSE
 610 |	STANDARD |	ANASCO |	PR |	PRIMARY	| 18.28 |	-67.14 |	NA-US-PR-ANASCO |	FALSE
-611 |	PO BOX |	ANGELES	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	FALSE
-612 |	STANDARD |	ARECIBO	PR |	PRIMARY |	18.45	| -66.73 |	NA-US-PR-ARECIBO |	FALSE
+611 |	PO BOX |	ANGELES |	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	FALSE
+612 |	STANDARD |	ARECIBO|	PR |	PRIMARY |	18.45	| -66.73 |	NA-US-PR-ARECIBO |	FALSE
 
 ### Create a table in Amazon Athena Data Catalog
 
