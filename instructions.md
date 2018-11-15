@@ -871,11 +871,12 @@ Once the query is run, you can look at the list of tables in Athena and see this
 ### Live Data Feed
 What about the data from the Kinesis stream? That is being written to the s3://~ingestionbucket~/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
 
-## Bonus Lab Exercise - Advanced AWS Users
-### Configure Zeppelin Notebook Server
-**Note: Configuring a Zeppeling Server is optional in this workshop.**
+# Advanced AWS Users
+The following sections are for more advanced AWS users. These labs will create EC2 instance and require users to create an SSH connection into the instances to complete the configuration.
 
-We will provide the code needed to make the Glue jobs function properly. However, a notebook server makes the development of the glue scripts much more dynamic and it is strongly encourage to continue with this section.
+## Bonus Lab Exercise #1 - Configure Zeppelin Notebook Server
+
+The workshop provided the code needed to make the Glue jobs function properly. But how do you write and debuf the code? A notebook server makes the development of the glue scripts simpler to test and debug by giving a user interface and immediate feedback on the results of a script. <a href="https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint.html" target="_blank">Click here</a> for more information on notebooks and glue development endpoints.
 
 #### Prerequisites
 1. An AWS Keypair Generated in your account
@@ -915,8 +916,12 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 1. Select your notebook server, under action select 'Open'
 1. You will get an error due to a self-signed SSL certificate. This is expected. Depending on the browser, o make an exception.
 1. In the upper right, click Login. User is 'admin' and password was supplied when configuring the notebook server.
+1. Now you can run your scripts that you created in the prior sections in the notebook. It provides a development environment to explore the data and create the ETL transformations.
 
-# Extra Credit #2: Create Amazon Redshift Cluster
+## Bonus Lab #2: Create Amazon Redshift Cluster
+This lab will show to take advantage of Redshift Spectrum to add external data to your Redshift Data Warehouse.
+
+### Part 1: Create the cluster
 
 In this task, you will create an Amazon Redshift cluster. You will need a SQL client such as SQLWorkbenchJ to connect to the redshift cluster.
 
@@ -937,7 +942,7 @@ In this task, you will create an Amazon Redshift cluster. You will need a SQL cl
 1. Using the JDBC URL, connect to your SQL Client. For for information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
 
 
-## Part 2: Create an External Table
+### Part 2: Create an External Table
 
 In this task, you will create an external table. Unlike a normal Redshift table, an external table references data stored in Amazon S3
 
@@ -959,7 +964,7 @@ You will start by defining an external schema. The external schema references a 
 
 Note:  If you receive a message that Schema "spectrum" already exists, continue with the next step. You will now create an external table that will be stored in the spectrum schema
 
-1. Run this command in your SQL client to run a query against an external table:
+* Run this command in your SQL client to run a query against an external table:
 
 ```SQL
 SELECT count(*) as TotalCount FROM "weblogs"."useractivity" where request like '%Dogs%';
@@ -967,19 +972,69 @@ SELECT count(*) as TotalCount FROM "weblogs"."useractivity" where request like '
 
 This should return a result that indicates the number of rows with dogs in the request.
 
-In this task, you will run queries against the external table, which will utilize Redshift Spectrum to process the data directly from Amazon S3. 
+### Part 3: Join a Redshift table to an External Table
 
-1. Run this command to find number of requests for each resource in the service:
+To see the true benefits of using external data is that it can be joined with data in Redshift itself. This hybrid approach allows you to store frequently queried data in Redshift in a schema optimized for the most common queries and join the data stored in your data lake. 
+
+* Run this command to create a table in redshift that pulls in the useractivity from the external table stored in S3.
 
 ```SQL
-        select count (*) requestcount,request
-        from weblogs.useractivity 
-        group by request
-        order by requestcount DESC
+CREATE SCHEMA IF NOT EXISTS local_weblogs ;
+drop table if exists local_weblogs.useractivity;
+create table local_weblogs.useractivity
+DISTSTYLE KEY
+DISTKEY (username) 
+SORTKEY(timestamp)
+AS SELECT * FROM "weblogs"."useractivity";
 ```
 
-Amazon Redshift Spectrum runs this query directly against the data stored in Amazon S3, without needing to load the data into a temporary Amazon Redshift table.
+This will create a new table that is stored in Redshift based on the useractivity data stored in S3.
 
+* The DISTSTYLE KEY DISTKEY(username) indicates that data will be distributed to the slice based on the username column. This is useful because any aggregation queries against the username column will be on the same slice.
+* The SORTKEY(timestamp) tells redshift to save the data sorted by the timestamp.
+
+
+Execute the following query to aggregate data against the useractivity table
+```SQL
+SELECT username, COUNT(timestamp) 
+FROM local_weblogs.useractivity
+GROUP BY username;
+```
+
+And compare the results to the following query:
+```SQL
+SELECT username, COUNT(timestamp) 
+FROM weblogs.useractivity
+GROUP BY username;
+```
+
+One is hitting the data local to redshift and the other is using an external source. Keep in mind this cluster only has 1 node and Redshift is designed to be a parallel data warehouse with many nodes in the cluster.
+
+Now, we'll show an example of joining data from your redshift database and the external data in S3. Here we will pull in the first and last names from the user profile into the useractivity query.
+
+```SQL
+SELECT ua.username, first_name, last_name, COUNT(timestamp) 
+FROM local_weblogs.useractivity ua
+INNER JOIN weblogs.userprofile up ON ua.username = up.username
+GROUP BY ua.username, first_name, last_name limit 100;
+```
+
+Now, by creating a view that combines the redshift and external data, you can create a single entity that reflects both data sources. This can greatly simplify the data model for consumers of the data in Redshift.
+```SQL
+CREATE OR REPLACE VIEW local_weblogs.useractivity_byuser AS 
+SELECT ua.username, first_name, last_name, COUNT(timestamp) 
+FROM local_weblogs.useractivity ua
+INNER JOIN weblogs.userprofile up ON ua.username = up.username
+GROUP BY ua.username, first_name, last_name WITH NO SCHEMA BINDING;
+```
+*Note, the view requires `WITH NO SCHEMA BINDING` to link to the view to the external table.*
+
+Now you can write a simple query to retreive this expanded set of data.
+```SQL
+SELECT * FROM local_weblogs.useractivity_byuser LIMIT 100;
+```
+
+That concludes the Redshift component of the lab. Be sure to delete your Redshift cluster.
 
 # Clean Up
 
