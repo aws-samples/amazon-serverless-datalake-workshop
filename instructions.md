@@ -929,6 +929,8 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 
 In this task, you will create an Amazon Redshift cluster. You will need a SQL client such as SQLWorkbenchJ to connect to the redshift cluster.
 
+**Make sure to delete the Redshift cluster after you complete the lab.**
+
 1. Open the AWS Console home page. Type 'Redshift' in the search box and load the Redshift console.
 1. Click 'Quick Launch' to launch a cluster
   1. Type Type: `ds2.xlarge`
@@ -991,3 +993,5 @@ Amazon Redshift Spectrum runs this query directly against the data stored in Ama
 # Clean Up
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
+
+**If you created a redshift cluster, make sure to delete the cluster!** Leaving the cluster running can cost hundreds of dollars per month.
