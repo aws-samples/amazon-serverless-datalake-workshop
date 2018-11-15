@@ -979,10 +979,6 @@ In this task, you will run queries against the external table, which will utiliz
 Amazon Redshift Spectrum runs this query directly against the data stored in Amazon S3, without needing to load the data into a temporary Amazon Redshift table.
 
 
-
-# End
-
-
 # Clean Up
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
