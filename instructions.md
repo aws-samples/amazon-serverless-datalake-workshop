@@ -935,7 +935,7 @@ In this task, you will create an Amazon Redshift cluster. You will need a SQL cl
 1. Using the JDBC URL, connect to your SQL Client. For for information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
 
 
-# Task 2: Create an External Table
+## Part 2: Create an External Table
 
 In this task, you will create an external table. Unlike a normal Redshift table, an external table references data stored in Amazon S3
 
