@@ -608,7 +608,7 @@ zipcode | 	zipCodeType |	city |	state	| locationtype |	lat |	long |	uslocation |
 -------- | ------------ | ---- | ------- | ---------- | ------ | ---- | -------- | --------------
 00705 |	STANDARD | 	AIBONITO |	PR |	PRIMARY |	18.14 |	-66.26 |	NA-US-PR-AIBONITO |	false
 00610 |	STANDARD |	ANASCO |	PR |	PRIMARY	 | 18.28 |	-67.14 |	NA-US-PR-ANASCO	| false
-00611 |	PO BOX |	ANGELES	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	false
+00611 |	PO BOX |	ANGELES |	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	false
 
 2. Choose **New Query**, copy the following statement into the query pane, and then choose **Run Query** to query for the number of page views per state to see which users interest in products. For this query we will join username across tables `joindatasets` and `zipcodesdata` 
 
@@ -925,28 +925,28 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 1. You will get an error due to a self-signed SSL certificate. This is expected. Depending on the browser, o make an exception.
 1. In the upper right, click Login. User is 'admin' and password was supplied when configuring the notebook server.
 
-# Extra Credit #2: Create Amazon Redshift Cluster
+### Create Amazon Redshift Cluster
 
 In this task, you will create an Amazon Redshift cluster. You will need a SQL client such as SQLWorkbenchJ to connect to the redshift cluster.
 
 **Make sure to delete the Redshift cluster after you complete the lab.**
 
 1. Open the AWS Console home page. Type 'Redshift' in the search box and load the Redshift console.
-1. Click 'Quick Launch' to launch a cluster
-  1. Type Type: `ds2.xlarge`
-  1. Number of Compute Nodes: `1`
-  1. Cluster Identifier: `serverless-datalake`
-  1. Master user name: `awsuser`
-  1. Master user password: *create your own password*
-  1. Confirm password: *re-enter password*
-  1. Database Port: `5439`
-  1. Available IAM Roles: `stack-name-redshift`
-1. Got to the details for the newly created cluster.
-1. After the cluster is in the `ready` state, search for the 'JDBC URLURL' and copy it onto your clipbord.
-1. Using the JDBC URL, connect to your SQL Client. For for information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
+1. Click **Quick Launch** to launch a cluster
+   - Type Type: `ds2.xlarge`
+   - Number of Compute Nodes: `1`
+   - Cluster Identifier: `serverless-datalake`
+   - Master user name: `awsuser`
+   - Master user password: *create your own password*
+   - Confirm password: *re-enter password*
+   - Database Port: `5439`
+   - Available IAM Roles: `stack-name-redshift`
+1. Go to the details for the newly created cluster.
+1. After the cluster is in the `ready` state, search for the **JDBC URL** and copy it onto your clipbord.
+1. Using the **JDBC URL**, connect to your SQL Client. For more information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
 
 
-## Part 2: Create an External Table
+## Create an External Table
 
 In this task, you will create an external table. Unlike a normal Redshift table, an external table references data stored in Amazon S3
 
@@ -966,7 +966,7 @@ You will start by defining an external schema. The external schema references a 
 ```
             
 
-Note:  If you receive a message that Schema "spectrum" already exists, continue with the next step. You will now create an external table that will be stored in the spectrum schema
+> **Note:**  If you receive a message that Schema "spectrum" already exists, continue with the next step. You will now create an external table that will be stored in the spectrum schema
 
 1. Run this command in your SQL client to run a query against an external table:
 
