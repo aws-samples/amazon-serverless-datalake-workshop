@@ -982,3 +982,5 @@ Amazon Redshift Spectrum runs this query directly against the data stored in Ama
 # Clean Up
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
+
+**If you created a redshift cluster, make sure to delete the cluster**
