@@ -41,6 +41,10 @@ Here is the Amazon CloudFormation script that the cloud engineering team made av
 
 [Annotated CloudFormation Template ](serverlessdatalake2018.html)
 
+## High Level Serverless Data Lake Architecture
+
+![data lake architecture](/images/datalakearc.png)
+
 ## Serverless Data Lake Components
 * S3
 * DynamoDb

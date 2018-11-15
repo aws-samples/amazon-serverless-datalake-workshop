@@ -925,7 +925,7 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 1. You will get an error due to a self-signed SSL certificate. This is expected. Depending on the browser, o make an exception.
 1. In the upper right, click Login. User is 'admin' and password was supplied when configuring the notebook server.
 
-### Create Amazon Redshift Cluster
+## Create Amazon Redshift Cluster
 
 In this task, you will create an Amazon Redshift cluster. You will need a SQL client such as SQLWorkbenchJ to connect to the redshift cluster.
 
@@ -946,7 +946,7 @@ In this task, you will create an Amazon Redshift cluster. You will need a SQL cl
 1. Using the **JDBC URL**, connect to your SQL Client. For more information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
 
 
-## Create an External Table
+### Create an External Table
 
 In this task, you will create an external table. Unlike a normal Redshift table, an external table references data stored in Amazon S3
 
