@@ -916,6 +916,73 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 1. You will get an error due to a self-signed SSL certificate. This is expected. Depending on the browser, o make an exception.
 1. In the upper right, click Login. User is 'admin' and password was supplied when configuring the notebook server.
 
+# Extra Credit #2: Create Amazon Redshift Cluster
+
+In this task, you will create an Amazon Redshift cluster. You will need a SQL client such as SQLWorkbenchJ to connect to the redshift cluster.
+
+1. Open the AWS Console home page. Type 'Redshift' in the search box and load the Redshift console.
+1. Click 'Quick Launch' to launch a cluster
+  1. Type Type: `ds2.xlarge`
+  1. Number of Compute Nodes: `1`
+  1. Cluster Identifier: `serverless-datalake`
+  1. Master user name: `awsuser`
+  1. Master user password: *create your own password*
+  1. Confirm password: *re-enter password*
+  1. Database Port: `5439`
+  1. Available IAM Roles: `stack-name-redshift`
+1. Got to the details for the newly created cluster.
+1. After the cluster is in the `ready` state, search for the 'JDBC URLURL' and copy it onto your clipbord.
+1. Using the JDBC URL, connect to your SQL Client. For for information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
+
+
+# Task 2: Create an External Table
+
+In this task, you will create an external table. Unlike a normal Redshift table, an external table references data stored in Amazon S3
+
+You will start by defining an external schema. The external schema references a database in the external data catalog and provides the IAM role identifier (ARN) that authorizes your cluster to access Amazon S3 on your behalf
+
+1. Run this command in your SQL client, replacing INSERT-YOUR-REDSHIFT-ROLE with the RedshiftRole value from the CloudFormation (Output of the key "RedshiftRole")
+
+```SQL
+  DROP  SCHEMA IF EXISTS weblogs;
+
+  CREATE EXTERNAL SCHEMA weblogs
+  FROM DATA CATALOG
+  DATABASE 'weblogs'
+  IAM_ROLE 'INSERT-YOUR-REDSHIFT-ROLE' 
+  CREATE EXTERNAL DATABASE IF NOT EXISTS;
+
+```
+            
+
+Note:  If you receive a message that Schema "spectrum" already exists, continue with the next step. You will now create an external table that will be stored in the spectrum schema
+
+1. Run this command in your SQL client to run a query against an external table:
+
+```SQL
+SELECT count(*) as TotalCount FROM "weblogs"."useractivity" where request like '%Dogs%';
+```
+
+This should return a result that indicates the number of rows with dogs in the request.
+
+In this task, you will run queries against the external table, which will utilize Redshift Spectrum to process the data directly from Amazon S3. 
+
+1. Run this command to find number of requests for each resource in the service:
+
+```SQL
+        select count (*) requestcount,request
+        from weblogs.useractivity 
+        group by request
+        order by requestcount DESC
+```
+
+Amazon Redshift Spectrum runs this query directly against the data stored in Amazon S3, without needing to load the data into a temporary Amazon Redshift table.
+
+
+
+# End
+
+
 # Clean Up
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
