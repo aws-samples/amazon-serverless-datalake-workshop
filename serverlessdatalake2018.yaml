@@ -114,6 +114,54 @@ Resources:
       MemorySize: 512
       Timeout: 60
       CodeUri: ./src
+  RedshiftServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}_redshift_role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: sts:AssumeRole
+  RedshiftRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AWS::StackName}_redshift_policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:*'
+            Resource:
+              - !Sub '${IngestionBucket.Arn}/*'
+              - !Sub '${IngestionBucket.Arn}'
+          - Effect: Allow
+            Action:
+              - 'glue:CreateDatabase'
+              - 'glue:DeleteDatabase'
+              - 'glue:GetDatabase'
+              - 'glue:GetDatabases'
+              - 'glue:UpdateDatabase'
+              - 'glue:CreateTable'
+              - 'glue:DeleteTable'
+              - 'glue:BatchDeleteTable'
+              - 'glue:UpdateTable'
+              - 'glue:GetTable'
+              - 'glue:GetTables'
+              - 'glue:BatchCreatePartition'
+              - 'glue:CreatePartition'
+              - 'glue:DeletePartition'
+              - 'glue:BatchDeletePartition'
+              - 'glue:UpdatePartition'
+              - 'glue:GetPartition'
+              - 'glue:GetPartition'
+              - 'glue:BatchGetPartition'
+            Resource: '*'
+      Roles:
+        - !Ref 'RedshiftServiceRole'
   GenerateSampleDataFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -161,6 +209,9 @@ Resources:
       StackName: !Ref AWS::StackName
 
 Outputs:
+  RedshiftRole:
+    Description: The role that redshift uses to access data
+    Value: !GetAtt RedshiftServiceRole.Arn
   WorkshopInstructionsUrl:
     Description: Follow the link for the instructions for the serverless datalake workshop.
     Value: !Sub https://s3.${AWS::Region}.amazonaws.com/${IngestionBucket}/instructions/instructions.html
