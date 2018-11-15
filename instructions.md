@@ -12,7 +12,7 @@ The logs are be written to Cloudwatch logs and they have configured the subscrip
 Kinesis Firehouse provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //*stackname*/apache CloudWatch Log Group.
 
 ### Lab
-This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed. Go to the CloudFormation <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home" target="_blank">console</a> click the checkbox next to stack for this workshop and look for the 'Outputs' tab below. The key will be IngestionBucket and copy the value onto your clipboard. 
+This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed.
 
 We will verify that the log files are moving from the cloudwatch logs to the S3 bucket via Kinesis Firehouse.
 
@@ -80,9 +80,18 @@ These datasets are downloaded into the S3 bucket at:
 ```
 
 ## Create an IAM Role
-Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role. For role permission make sure you select both AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
+Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role or follow the steps below
 
-> In the Lab guide **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name then please substitute your role name for **AWSGlueServiceRoleDefault**
+1. Click [here](https://console.aws.amazon.com/iam/) to open IAM console.
+2. In the left navigation pane, choose **Roles**.
+3. Choose **Create role**.
+4. For role type, choose **AWS Service**, find and choose **Glue**, and choose **Next: Permissions**.
+5. On the **Attach permissions policy** page, choose the policies that contain the required permissions; choose the AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
+6. Choose **Next: Review**.
+7. For Role name, type a name for your role; for example, **AWSGlueServiceRoleDefault**. 
+8. Choose **Create Role**.
+
+> In the Lab guide **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name then please substitute your role name for **AWSGlueServiceRoleDefault**.
 
 ## Discover Data
 
@@ -401,7 +410,7 @@ anpnlrpnlm9 |	Dogs |	12
 # Join and relationalize data with AWS Glue
 
 In previous sections we looked how to work with semi-structured datasets to make it easily querable and consumable. In real world hardly anyone works with just one dataset. Normally you would end up working with multiple datasets from various datasources having different schemas. 
-In this exerise we will see how you can leverage AWS Glue to join different datasets to load, transform, and rewrite data in AWS S3 so that it can easily and efficiently be queried and analyzed.
+In this exercise we will see how you can leverage AWS Glue to join different datasets to load, transform, and rewrite data in AWS S3 so that it can easily and efficiently be queried and analyzed.
 You will work with `useractivity` and `userprofile` datasets, the table definitions for which were created in previous section
 
 ### Create AWS Glue job 
