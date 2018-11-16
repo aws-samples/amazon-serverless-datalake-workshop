@@ -3,9 +3,9 @@
 # Ingestion
 The first step in the data processing in a data lake is that data needs to land in S3.
 
-The cloud engineering team has created an extract of the user profile database and demographic data into S3. They also were able to create entries in the Glue Data Catalog for this data. They accomplished this through some scripting, but they need help ingesting the web log data from the websites. The web logs are in a CSV format and they are unsure how to import the data into the Glue Data Catalog.
+The cloud engineering team has created an extract of the user profile database and demographic data into S3. They also were able to create entries in the Glue Data Catalog for this data. They accomplished this through some scripting, but they need help ingesting the web log data from the websites. The weblogs are in a CSV format and they are unsure how to import the data into the Glue Data Catalog.
 
-The logs are be written to Cloudwatch logs and they have configured the subscription from cloud watch logs to kinesis firehouse. 
+The logs are to be written to Cloudwatch logs and they have configured the subscription from cloud watch logs to kinesis firehouse. 
 
 
 ## Kinesis Firehouse Delivery Steam
@@ -57,14 +57,14 @@ You can see this configured in the CloudFormation script.
 
 The was done automatically in the lab because setting up the IAM Roles can be very tedious and time consuming.
 
-Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON format. Not only are they they are harder to read in a compressed json format, aren't written in a JSON compliant format. Each line is a JSON file, but there aren't commas between each lines so JSON parsing fails. We use a template that will run a lambda function that uncompresses the file and returns the data payload which is in a CSV format.
+Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON format. Not only are they are harder to read in a compressed json format, aren't written in a JSON compliant format. Each line is a JSON file, but there aren't commas between each line so JSON parsing fails. We use a template that will run a lambda function that uncompresses the file and returns the data payload which is in a CSV format.
 
 </details>
 
 
 # Extract, Transform and Load
 
-Generally raw data is unstructured/semi-structured and inefficient for querying. In its raw format, Apache Weblogs are difficult to query. Also a lot of times there is always a need to transform the raw datasets by either augmenting or reducing the data to derive meaningful insights.
+Generally, raw data is unstructured/semi-structured and inefficient for querying. In its raw format, Apache Weblogs are difficult to query. Also a lot of times there is always a need to transform the raw datasets by either augmenting or reducing the data to derive meaningful insights.
 As part of this lab we will start with creating the table definitions (schemas) from the raw datasets that we have.
 Below are the datasets that we would be working with:
 - `useractivity.csv`
@@ -82,7 +82,7 @@ These datasets are downloaded into the S3 bucket at:
 ## Create an IAM Role
 Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role. For role permission make sure you select both AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
 
-> In the Lab guide **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name then please substitute your role name for **AWSGlueServiceRoleDefault**
+> In the Lab guide, **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name, then please substitute your role name for **AWSGlueServiceRoleDefault**
 
 ## Discover Data
 
@@ -139,7 +139,7 @@ AWS Glue crawler will create the following tables in the `weblogs` database:
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `rawdatacrawler`, keep the defaults on the page the same and click **Next** button
 5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/raw` S3 bucket location from **Include path**.
-5. Expand **Exclude patterns (optional)** section and enter `zipcodes/**` in **Exclude patterns** text box (We will exclude the zipcodes file in this exercise and pick it up latter in the lab). Click **Next** button
+5. Expand **Exclude patterns (optional)** section and enter `zipcodes/**` in **Exclude patterns** text box (We will exclude the zipcodes file in this exercise and pick it up later in the lab). Click **Next** button
 6. Choose **No** and click **Next** on **Add another data store**
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -177,7 +177,7 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
 3. Follow the instructions in the **Add job** wizard
    - Under **Job properties** step, Enter `useractivityjob` in the **Name** text box
    - Under **IAM role** drop down select `AWSGlueServiceRoleDefault`
-   - Keep rest of the defaults the same and click **Next** button
+   - Keep the rest of the defaults the same and click **Next** button
    - Under **Data source** step, choose `useractivity` data catalog table and click **Next**  button
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose `Amazon S3` from **Data store** drop down
@@ -287,7 +287,7 @@ job.commit()
 15. From `Tables` page, select `useractivityconverted` table and explore the table definition that glue crawler created.
 
 	
-# Serveless Analysis of data in Amazon S3 using Amazon Athena
+# Serverless Analysis of data in Amazon S3 using Amazon Athena
 
 > If you are using Amazon Athena for the first then follow the [Setting Up Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/setting-up.html) to make sure you have the correct permissions to execute the lab.
 
@@ -299,7 +299,7 @@ In this workshop we will leverage the AWs Glue Data Catalog `weblogs` for server
 ### Explore AWS Glue Data Catalog in Amazon Athena
 1. From AWS Management Console, in the search text box, type **Amazon Athena**, select **Amazon Athena** service from the filtered list to open Amazon Athena console OR Open the [AWS Management Console for Athena](https://console.aws.amazon.com/athena/home).
 2. If this is your first time visiting the AWS Management Console for Athena, you will get a Getting Started page. Choose **Get Started** to open the Query Editor. If this isn't your first time, the Athena Query Editor opens.
-3. Make a note of the AWS region name, for example, for this lab you will need to choose the **US East (N. Virgina)** region.
+3. Make a note of the AWS region name, for example, for this lab you will need to choose the **US East (N. Virginia)** region.
 4. In the **Athena Query Editor**, you will see a query pane with an example query. Now you can start entering your query in the query pane.
 5. On left hand side of the screen, under **Database** drop down select `weblogs` database if not already selected. After selecting `weblogs` you should see tables `useractivity`, `userprofile` and `useractivityconverted` listed.
 
@@ -400,8 +400,8 @@ anpnlrpnlm9 |	Dogs |	12
 
 # Join and relationalize data with AWS Glue
 
-In previous sections we looked how to work with semi-structured datasets to make it easily querable and consumable. In real world hardly anyone works with just one dataset. Normally you would end up working with multiple datasets from various datasources having different schemas. 
-In this exerise we will see how you can leverage AWS Glue to join different datasets to load, transform, and rewrite data in AWS S3 so that it can easily and efficiently be queried and analyzed.
+In previous sections we looked at how to work with semi-structured datasets to make it easily queryable and consumable. In real world hardly anyone works with just one dataset. Normally you would end up working with multiple datasets from various datasources having different schemas. 
+In this exercise we will see how you can leverage AWS Glue to join different datasets to load, transform, and rewrite data in AWS S3 so that it can easily and efficiently be queried and analyzed.
 You will work with `useractivity` and `userprofile` datasets, the table definitions for which were created in previous section
 
 ### Create AWS Glue job 
@@ -517,8 +517,8 @@ job.commit()
 14. From **Databases** page select `weblogs` database and select **Tables in weblogs** link. You should see table `joindatasets` listed along with previously created tables.
 15. From **Tables** page, select `joindatasets` table and explore the table definition that glue crawler created.
 
-# Serveless Analysis of data in Amazon S3 using Amazon Athena Contd.
-In previous sections we saw how Athena can leverage AWS Glue Data Catalog. In this section we will explore how you can create new table schema in Athena but still use the same AWS Glue Data Catalog.When you create a new table schema in Athena, Athena stores the schema in a data catalog and uses it when you run queries.Athena uses an approach known as schema-on-read, which means a schema is projected on to your data at the time you execute a query. This eliminates the need for data loading or transformation. Athena does not modify your data in Amazon S3.
+# Serverless Analysis of data in Amazon S3 using Amazon Athena Contd.
+In previous sections we saw how Athena can leverage AWS Glue Data Catalog. In this section we will explore how you can create new table schema in Athena but still use the same AWS Glue Data Catalog. When you create a new table schema in Athena, Athena stores the schema in a data catalog and uses it when you run queries. Athena uses an approach known as schema-on-read, which means a schema is projected on to your data at the time you execute a query. This eliminates the need for data loading or transformation. Athena does not modify your data in Amazon S3.
 
 > **Note:** In regions where AWS Glue is supported, Athena uses the AWS Glue Data Catalog as a central location to store and retrieve table metadata throughout an AWS account.
 
@@ -546,7 +546,7 @@ Zipcode | ZipCodeType | City	 |  State  |   LocationType  |	Lat | Long | Locatio
   - You must have the appropriate permissions to work with data in the Amazon S3 location. For more information, refer [Setting User and Amazon S3 Bucket Permissions](http://docs.aws.amazon.com/athena/latest/ug/access.html).
   - The data can be in a different region from the primary region where you run Athena as long as the data is not encrypted in Amazon S3. Standard inter-region data transfer rates for Amazon S3 apply in addition to standard Athena charges.
   - If the data is encrypted in Amazon S3, it must be in the same region, and the user or principal who creates the table must have the appropriate permissions to decrypt the data. For more information, refer [Configuring Encryption Options](http://docs.aws.amazon.com/athena/latest/ug/encryption.html).
-  - Athena does not support different storage classes within the bucket specified by the LOCATION clause, does not support the GLACIER storage class, and does not support Requester Pays buckets. For more information, see [Storage Classes](http://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html),[Changing the Storage Class of an Object in Amazon S3](http://docs.aws.amazon.com/AmazonS3/latest/dev/ChgStoClsOfObj.html), and [Requester Pays Buckets](http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html) in the Amazon Simple Storage Service Developer Guide.
+  - Athena does not support different storage classes within the bucket specified by the LOCATION clause, does not support the GLACIER storage class, and does not support Requester Pays buckets. For more information, see [Storage Classes](http://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html), [Changing the Storage Class of an Object in Amazon S3](http://docs.aws.amazon.com/AmazonS3/latest/dev/ChgStoClsOfObj.html), and [Requester Pays Buckets](http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html) in the Amazon Simple Storage Service Developer Guide.
 
 1. From AWS Management Console, in the search text box, type **Amazon Athena**, select **Amazon Athena** service from the filtered list to open Amazon Athena console OR Open the [AWS Management Console for Athena](https://console.aws.amazon.com/athena/home).
 2. Ensure `weblogs` is selected from the **Database** list and then choose **New Query**.
@@ -629,7 +629,7 @@ Once you have signed up for QuickSight successfully next step is to grant QuickS
 4. On **New Athena data source** dialog box, enter **Data source name** e.g. MyAthenaDatasource
 5. Click on **Validate connection** to make sure you have the permissions to access Athena.
 6. Click **Create data source**. 
-7. Choose `weblogs` database from **Database: contain sets of tables** dropdown, wll tables under `weblogs` should get listed. You can choose a table to visualize the data or create a custom SQL. In this lab we will create a custom SQL.
+7. Choose `weblogs` database from **Database: contain sets of tables** dropdown, all tables under `weblogs` should get listed. You can choose a table to visualize the data or create a custom SQL. In this lab we will create a custom SQL.
 8. Click **Use custom SQL** 
 
  > **Note:** In QuickSight, when creating a new data set based on a direct query to a database, you can choose an existing SQL query or create a new SQL query. You can use either an existing or new query to refine the data retrieved from a database, or to combine data from multiple tables. Using a SQL query, you can specify SQL statements in addition to any join criteria to refine the data set. If you want to join tables only by specifying the join type and the fields to use to join the tables, you can use the join interface instead. For more information about using the join interface, see [Joining Tables](https://docs.aws.amazon.com/quicksight/latest/user/joining-tables.html).
@@ -648,7 +648,7 @@ Once you have signed up for QuickSight successfully next step is to grant QuickS
   15. Enter the join column information:
       - In the **Data sources** section of the **Configure join** pane, click on **Enter a field**, choose the join column, `zipcode` for the `zipcodesdata` table. 
       - Choose the join column, `zip` for the table `joindatasets`.
-      > **Note:** You can select mulitple join columns by clicking **+Add a new joint clause**
+      > **Note:** You can select multiple join columns by clicking **+Add a new joint clause**
   16. In the **Configure join** pane, under **Join types**, choose the **Inner** join type and click **Apply**
       - The join icon updates to indicate that the join type and columns have been selected.
       - The fields from the table to the right appear at the bottom of the **Fields** pane.
@@ -659,7 +659,7 @@ Once you have signed up for QuickSight successfully next step is to grant QuickS
       - Select **Date** from **Type** menu
       - On **Edit date format** dialog, enter the format `dd/MMM/yyyy:HH:mm:ss` and click **Validate**. You should see that QuickSight is now able to recognize the `timestamp` as a valid **Date** type
       - Click **Update** to apply the change.  
-  19. From **Fields** pane, filter the dataset to remove columns that are note required for analysis. Uncheck columns `bytes`, `firstname`, `zip`,`zipcodetype`, `http`, `uslocation`, `locationtype`,`decommisioned`
+  19. From **Fields** pane, filter the dataset to remove columns that are note required for analysis. Uncheck columns `bytes`, `firstname`, `zip`,`zipcodetype`, `http`, `uslocation`, `locationtype`,`decommissioned`
   20. (Optional) At top of the page, enter name for the dashboard E.g. MyFirstDashboard
   20. Click **Save & visualize** 
   
@@ -669,22 +669,22 @@ Now that you have configured the data source and created the custom sql, in this
 
 > **Note:** SPICE engine might take few minutes to load the data. You can start building the visualization as the data is getting loaded in background.
 
-1. On the QuickSight dashboard page, under **Visual Types** pane, select **Points on map** visulization.
+1. On the QuickSight dashboard page, under **Visual Types** pane, select **Points on map** visualization.
 2. Expand the **Field wells** pane by clicking on dropdown arrows at top-right corner of the page under your username.
 3. From **Field list** pane, drag `state` field to **Geospatial** bucket, drag `city` field to **Color** bucket and drag `username` field to **Size** bucket
-4. Based on above selections QuickSight should plot the data repectively across U.S maps.
+4. Based on above selections QuickSight should plot the data respectively across U.S maps.
 5. Click on the field name `username` in **Size** from **Field wells** to reveal a sub-menu.
 5. Select **Aggregate:Count distinct** to aggregate by distinct users.
-5. From the visulization to see which state has the maximum number of users for the website.
+5. From the visualization to see which state has the maximum number of users for the website.
 
 #### Add age based filter to visualize the dataset 
 
 1. On the QuickSight dashboard page, click **+ Add** button on top-left corner
-2. Select **Add visual** mennu item to add a new visual to the dashboard
+2. Select **Add visual** menu item to add a new visual to the dashboard
 3. From **Visual Types** pane, select **Horizontal bar chart** visualization.
 4. Expand the **Field wells** pane by clicking on dropdown arrows at top-right corner of the page under your username.
 4. From **Field list** pane, drag `age` field to **Y axis** bucket and drag `username` field to **Value** bucket.
-5. Based on above selections QuickSight should plot the data repectively.
+5. Based on above selections QuickSight should plot the data respectively.
 6. To add filter to `age`,
     - Select the dropdown for `age` field from the **Fields list**. 
     - Select **Add filter for this field** from the dropdown menu.
@@ -692,19 +692,19 @@ Now that you have configured the data source and created the custom sql, in this
     - From the age list select `25` and click **Apply** and then **Close**
 7. To filter the data only for the age 25
 
-#### Visualize the monhtly data for all web page request
+#### Visualize the monthly data for all web page request
 
 1. On the QuickSight dashboard page, click **+ Add** button on top-left corner
-2. Select **Add visual** mennu item to add a new visual to the dashboard
+2. Select **Add visual** menu item to add a new visual to the dashboard
 3. From **Visual Types** pane, select **Line chart** visualization.
 4. Expand the **Field wells** pane by clicking on dropdown arrows at top-right corner of the page under your username.
 5. From **Field list** pane, drag `timestamp` field to **X axis** bucket, drag `username` field to **Value** bucket and `request` to **Color** bucket
-6. Based on above selections QuickSight should plot the data repectively.
+6. Based on above selections QuickSight should plot the data respectively.
 6. To add filter to `request`,
     - Select the dropdown for `request` field from the **Fields list**. 
     - Select **Add filter for this field** from the dropdown menu.
-    - From **Applied Fiters**, clcik **Include - all** to open the current filters
-    - From the **Filter type**, select **Custom filter** and select **Conatins** filter. In the text bo under **Contains** enter `GET` and click **Apply** and then **Close**
+    - From **Applied Filters**, click **Include - all** to open the current filters
+    - From the **Filter type**, select **Custom filter** and select **Contains** filter. In the text under **Contains** enter `GET` and click **Apply** and then **Close**
 7. Click on the field name `timestamp` in **X-axis** to reveal a sub-menu.
 8. Select **Aggregate:Day** to aggregate by day.
 9. Use the slider on X-axis to explore the daily request pattern for a particular month.
@@ -714,7 +714,7 @@ Now that you have configured the data source and created the custom sql, in this
 # Governance
 Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an S3 data lake, there are several ways to protect the data and grant access to the data.
 
-The first layer will be to use IAM policies to grant access to IAM principles to the data in the S3 bucket. This is done with S3 bucket policies and IAM polices attached to IAM users, groups, and roles.
+The first layer will be to use IAM policies to grant access to IAM principles to the data in the S3 bucket. This is done with S3 bucket policies and IAM policies attached to IAM users, groups, and roles.
 
 This approach is required if the consumer of the date requires direct access to the files or queries through Amazon Athena.
 
@@ -726,7 +726,7 @@ Finally, the Business Intelligence (BI) tier can authenticate users and limit vi
 It is common to have multiple classifications of data in the same table. One column will be more restricted than another. Because authorization in S3 is at the file level, you will need to separate out the restricted data from the less restricted data.
 
 
-There are two approaches to this, the creation of two tables: one contains just the less sensitive data and other other contains the full dataset. In the less sensitive data, we have have the customer id, age, and a hash of the social security number. This will allow the Ecommerce analytics team to run demograhic analytics on the profiles and aggragate profiles of the same person via the hashed SSN.
+There are two approaches to this, the creation of two tables: one contains just the less sensitive data and other contains the full dataset. In the less sensitive data, we have the customer id, age, and a hash of the social security number. This will allow the Ecommerce analytics team to run demographic analytics on the profiles and aggregate profiles of the same person via the hashed SSN.
 
 The CustomerRestricted table will contain all of the columns.
 
@@ -741,8 +741,8 @@ The CustomerRestricted table will contain all of the columns.
 | SSN Hash | SSN |
 | Credit Card Hash | Credit Card |
 
-### Create a UDF to simplify apply a hash function to a columns
-In order to protect sensative data, we will want to eliminate columns or hash sensitive fields. In this example we will hash user profile SSN's and credit card numbers. This will allow analysts to join profiles that share the same SSN or credit card, but encodes the sensitive data by applying a one-way hash algorith.
+### Create a UDF to simplify apply a hash function to columns
+In order to protect sensitive data, we will want to eliminate columns or hash sensitive fields. In this example we will hash user profile SSN's and credit card numbers. This will allow analysts to join profiles that share the same SSN or credit card, but encodes the sensitive data by applying a one-way hash algorithm.
 
 #### Create Glue Job
 
@@ -831,7 +831,7 @@ job.commit()
 
 
 # View the Data
-Now that the weblogs are available in Amazon S3, the analyics team would like access to the data. You'll use Amazon Athena to query the data using SQL Statements. This will allow you to query the data without viewing the sensitive data.
+Now that the weblogs are available in Amazon S3, the analytics team would like access to the data. You'll use Amazon Athena to query the data using SQL Statements. This will allow you to query the data without viewing the sensitive data.
 
 ```SQL
 SELECT first_name, last_name, hash_cc, hash_ssn FROM "weblogs"."userprofile_secure" limit 10;
@@ -865,8 +865,8 @@ Once the query is run, you can look at the list of tables in Athena and see this
 #### Extra Credit - Test Role Based Access
 
 1. Create 2 new users, one has access to s3://~ingestionbucket~/prepared/userprofile-secure, one does not.
-1. Run athena query against Customer with user1 and user2
-1. Run athena query against CustomerRestricted with user1 and user2
+1. Run Athena query against Customer with user1 and user2
+1. Run Athena query against CustomerRestricted with user1 and user2
 
 ### Live Data Feed
 What about the data from the Kinesis stream? That is being written to the s3://~ingestionbucket~/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
