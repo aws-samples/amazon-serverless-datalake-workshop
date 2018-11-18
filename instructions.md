@@ -880,8 +880,8 @@ Once the query is run, you can look at the list of tables in Athena and see this
 ### Live Data Feed
 What about the data from the Kinesis stream? That is being written to the s3://~ingestionbucket~/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
 
-## Bonus Lab Exercise - Advanced AWS Users
-### Configure Zeppelin Notebook Server
+# Bonus Lab Exercise - Advanced AWS Users
+## Configure Zeppelin Notebook Server
 **Note: Configuring a Zeppeling Server is optional in this workshop.**
 
 We will provide the code needed to make the Glue jobs function properly. However, a notebook server makes the development of the glue scripts much more dynamic and it is strongly encourage to continue with this section.
@@ -988,6 +988,47 @@ In this task, you will run queries against the external table, which will utiliz
 ```
 
 Amazon Redshift Spectrum runs this query directly against the data stored in Amazon S3, without needing to load the data into a temporary Amazon Redshift table.
+
+
+## AWS Database Migration Service (DMS) - S3 DynamoDB integration
+
+AWS DMS is a cloud service that makes it easy to migrate relational databases, data warehouses, NoSQL databases, and other types of data stores. You can use AWS DMS to migrate your data into the AWS Cloud, between on-premises instances, or between combinations of cloud and on-premises setups. You can perform one-time migrations or can replicate ongoing changes to keep the source and targets in sync. 
+AWS DMS supports a number of sources and targets for migration, for more details refer [documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.html)
+As part of your data lake you might need to move data from on-premise or other locations into a centralized repository for analysis. As part of this workshop we will look how you can leverage DMS to move user profile dataset which is uploaded to S3 to DynamoDB
+
+**Prerequisites**
+You will need at least 2 IAM roles e.g. `dms-cloudwatch-logs-role` for pushing logs to Amazon CloudWatch and the `dms-vpc-role` for use by the DMS service. For more infromation on creating these roles, take a look at [Creating the IAM Roles to Use with the AWS CLI and AWS DMS API](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.APIRole.html) in the DMS documentation.
+For DMS repliaction instance, you will need an VPC with subnets and security groups configured to allow access to AWS DMS services and othe AWS resources like S3 and DynamoDB. For more information, take a look at [Setting Up a Network for a Replication Instance](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.VPC.html)
+When you use Amazon S3 as a source for AWS DMS, the source Amazon S3 bucket that you use must be in the same AWS Region as the AWS DMS replication instance that you use to migrate your data. In addition, the AWS account you use for the migration must have read access to the source bucket. The role assigned to the user account creating the migration task must have S3 permissions for `GetObject` and `ListBucket`. For this workshop you can add these permission to `dms-vpc-role`.
+When working with a DynamoDB database as a target for AWS DMS, make sure that your IAM role allows AWS DMS to assume and grant access to the DynamoDB tables that are being migrated into. If you are using a separate role, make sure that you allow the DMS service to perform `AssumeRole`. The user account creating the migration task must be able to perform the DynamoDB actions `PutItem`, `CreateTable`, `DescribeTable`, `DeleteTable`, `DeleteItem`, and `ListTables`. For this workshop you can add these permission to `dms-vpc-role`.
+
+> **Note:** To keep it simple, for S3 and DynamoDB access you can leverage the AWS managed policies **AmazonS3FullAccess** and **AmazonDynamoDBFullAccess** and attach them to `dms-vpc-role` 
+
+### Create DMS replication server, source and target endpoints and migration tasks
+To perfrom a database migration, DMS needs a replication instance (which is a managed Amazon Elastic Compute Cloud (Amazon EC2) instance that hosts one or more replication tasks), source endpoint (an endpoint to access your source data store), target endpoint (an endpoint to access your target data store)and replication task(s) (task(s) to move a set of data from the source endpoint to the target endpoint)
+You can create the above components either via AWS Management Console or via scripting e.g. Amazon CloudFormation. For this lab we will use a Amazon CloudFormation template to create the required components.
+
+Here is the Amazon CloudFormation template that you can use to spin up the requeired components for DMS, [Create DMS stack](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvet-2018-serverless-datalake-dms&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverlessdatalake2018-dms.yml)
+
+Enter the stack name, choose the replication instance type, enter security group name, S3 bucket name (s3://~ingestionbucket~/raw/userprofile) and role arn to create the stack.
+
+Once the stack creation is complete, open [AWS DMS console](https://console.aws.amazon.com/dms/home) and explore the components that Amazon CloudFormation template created. The CloudFormation will 
+
+- Create a replication instance
+- Create a source endpoint
+- Create a target endpoint
+- Create a target endpoint
+
+> **Note:** For details on S3 source endpoint configuration, refer [AWS Documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.S3.html). For details on DynamoDB endpoint configuration, refer [AWS Documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html)
+
+#### Execute the DMS Task to load userprofile from S3 to DynamoDB
+
+From DMS console select **Tasks** menu and select the task created via CloudFormation and click on **Start/Resume** to execute the task. The task status will change from *Ready* to *Starting* to *Running* to *Load complete*
+After the task is in *Load complete* status, open the DynamoDB console and verify that a new table `userprofile` was created with ~50000 user profile records.
+
+**Conclusion**
+As part of the above exerise we saw how to create a data load pipeline using DMS. You can extend the CloudFormation template to load multiple tables or change the target and source endpoints by simply swapping out the resources in the template.
+
 
 
 # Clean Up
