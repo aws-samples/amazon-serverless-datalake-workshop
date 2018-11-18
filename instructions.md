@@ -996,7 +996,7 @@ AWS DMS is a cloud service that makes it easy to migrate relational databases, d
 AWS DMS supports a number of sources and targets for migration, for more details refer [documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.html)
 As part of your data lake you might need to move data from on-premise or other locations into a centralized repository for analysis. As part of this workshop we will look how you can leverage DMS to move user profile dataset which is uploaded to S3 to DynamoDB
 
-**Prerequisites**
+#### Prerequisites
 You will need at least 2 IAM roles e.g. `dms-cloudwatch-logs-role` for pushing logs to Amazon CloudWatch and the `dms-vpc-role` for use by the DMS service. For more infromation on creating these roles, take a look at [Creating the IAM Roles to Use with the AWS CLI and AWS DMS API](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.APIRole.html) in the DMS documentation.
 For DMS repliaction instance, you will need an VPC with subnets and security groups configured to allow access to AWS DMS services and othe AWS resources like S3 and DynamoDB. For more information, take a look at [Setting Up a Network for a Replication Instance](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.VPC.html)
 When you use Amazon S3 as a source for AWS DMS, the source Amazon S3 bucket that you use must be in the same AWS Region as the AWS DMS replication instance that you use to migrate your data. In addition, the AWS account you use for the migration must have read access to the source bucket. The role assigned to the user account creating the migration task must have S3 permissions for `GetObject` and `ListBucket`. For this workshop you can add these permission to `dms-vpc-role`.
@@ -1026,7 +1026,7 @@ Once the stack creation is complete, open [AWS DMS console](https://console.aws.
 From DMS console select **Tasks** menu and select the task created via CloudFormation and click on **Start/Resume** to execute the task. The task status will change from *Ready* to *Starting* to *Running* to *Load complete*
 After the task is in *Load complete* status, open the DynamoDB console and verify that a new table `userprofile` was created with ~50000 user profile records.
 
-**Conclusion**
+#### Conclusion
 As part of the above exerise we saw how to create a data load pipeline using DMS. You can extend the CloudFormation template to load multiple tables or change the target and source endpoints by simply swapping out the resources in the template.
 
 
@@ -1035,4 +1035,5 @@ As part of the above exerise we saw how to create a data load pipeline using DMS
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
 
-**If you created a redshift cluster, make sure to delete the cluster!** Leaving the cluster running can cost hundreds of dollars per month.
+**If you created a redshift cluster, executed DMS lab make sure to delete the cluster and dynamodb table!** Leaving these running can cost hundreds of dollars per month.
+
