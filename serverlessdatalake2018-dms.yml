@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for importing files from S3.
+Parameters:
+    ReplicationInstance:
+        Default: dms.t2.medium
+        AllowedValues:
+            - dms.t2.micro
+            - dms.t2.small
+            - dms.t2.medium
+            - dms.t2.large
+            - dms.c4.large
+            - dms.c4.xlarge
+            - dms.c4.2xlarge
+            - dms.c4.4xlarge
+        Description: The instance type to use for the replication instance.
+        Type: String
+    ReplicationSecurityGroups:
+        Default: "<YOUR SECURITY GROUP NAME e.g. sg-12aa1234>"
+        Type: String
+        Description: Security group in your VPC with ingress to your data & this security group.
+    S3BucketName:
+        Default: "<YOUR S3 bucket name>"
+        Type: String
+        Description: Bucket name where your data is stored
+    ServiceRoleArn:
+        Default: "<YOUR IAM ROLE ARN e.g. arn:aws:iam::123456789012:role/dms-vpc-role>"
+        Type: String
+        Description: Service role ARN with permissions to DMS, S3 & DynamoDB
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            - Label:
+                default: Replication Instance Information
+              Parameters:
+                - ReplicationInstance
+                - ReplicationSecurityGroups
+                - S3BucketName
+                - ServiceRoleArn
+        ParameterLabels:
+            ReplicationInstance:
+                default: Instance class
+            ReplicationSecurityGroups:
+                default: Security group
+            S3BucketName:
+                default: S3 bucket name
+            ServiceRoleArn:
+                default: Service role arn
+Resources:
+  DMSReplicationInstance:
+    Type: "AWS::DMS::ReplicationInstance"
+    Properties:
+      AllocatedStorage: 50
+      MultiAZ: false
+      PubliclyAccessible: false
+      ReplicationInstanceClass:
+        Ref: ReplicationInstance
+      Tags:
+        -
+          Key: "Name"
+          Value: "importFromS3"
+        -
+          Key: "project"
+          Value: "exampleImport"
+      VpcSecurityGroupIds:
+        - Ref: ReplicationSecurityGroups
+  DMSEndpointS3:
+    Type: "AWS::DMS::Endpoint"
+    Properties:
+      EndpointType: "source"
+      EngineName: "S3"
+      S3Settings:
+        CsvDelimiter: ","
+        CsvRowDelimiter: "\\r\\n"
+        BucketName:
+          Ref: S3BucketName
+        ExternalTableDefinition: "{\"TableCount\":\"1\",\"Tables\":[{\"TableName\":\"userprofile\",\"TablePath\":\"raw/userprofile/\",\"TableOwner\":\"dynamoschema\",\"TableColumns\":[{\"ColumnName\":\"firstname\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"254\"},{\"ColumnName\":\"lastname\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"254\"},{\"ColumnName\":\"username\",\"ColumnType\":\"STRING\",\"ColumnNullable\":\"false\",\"ColumnIsPk\":\"true\"},{\"ColumnName\":\"email\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"254\"},{\"ColumnName\":\"gender\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"2\"},{\"ColumnName\":\"ipaddress\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"12\"},{\"ColumnName\":\"phone\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"10\"},{\"ColumnName\":\"zip\",\"ColumnType\":\"NUMERIC\",\"ColumnLength\":\"9\"},{\"ColumnName\":\"cc\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"30\"},{\"ColumnName\":\"password\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"254\"},{\"ColumnName\":\"ssn\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"9\"},{\"ColumnName\":\"age\",\"ColumnType\":\"STRING\",\"ColumnLength\":\"3\"}],\"TableColumnsTotal\":\"11\"}]}"
+        ServiceAccessRoleArn:
+          Ref: ServiceRoleArn
+        CompressionType: "NONE"
+      Tags:
+        -
+          Key: "Name"
+          Value: "importFromS3"
+        -
+          Key: "project"
+          Value: "exampleImport"
+  DMSEndpointDynamoDB:
+    Type: "AWS::DMS::Endpoint"
+    Properties:
+      DynamoDbSettings:
+        ServiceAccessRoleArn:
+          Ref: ServiceRoleArn
+      EndpointType: "target"
+      EngineName: "DYNAMODB"
+      Tags:
+        -
+          Key: "Name"
+          Value: "importFromS3"
+        -
+          Key: "project"
+          Value: "exampleImport"
+  DMSTaskMigration:
+    Type: "AWS::DMS::ReplicationTask"
+    Properties:
+      MigrationType: "full-load"
+      ReplicationInstanceArn:
+        Ref: DMSReplicationInstance
+      ReplicationTaskSettings: "{\"Logging\": {\"CloudWatchLogGroup\": \"dms-tasks-aurora-redshift-migration\", \"CloudWatchLogStream\": \"dms-task-DBCHWX72MDJRP2MT4MZN4RGIH4\", \"EnableLogging\": true, \"LogComponents\": [{\"Id\": \"SOURCE_UNLOAD\", \"Severity\": \"LOGGER_SEVERITY_DEFAULT\"}, {\"Id\": \"SOURCE_CAPTURE\", \"Severity\": \"LOGGER_SEVERITY_DEFAULT\"}, {\"Id\": \"TARGET_LOAD\", \"Severity\": \"LOGGER_SEVERITY_DEFAULT\"}, {\"Id\": \"TARGET_APPLY\", \"Severity\": \"LOGGER_SEVERITY_DEFAULT\"}, {\"Id\": \"TASK_MANAGER\", \"Severity\": \"LOGGER_SEVERITY_DEFAULT\"}]}, \"ControlTablesSettings\": {\"SuspendedTablesTableEnabled\": false, \"HistoryTimeslotInMinutes\": 5, \"historyTimeslotInMinutes\": 5, \"StatusTableEnabled\": false, \"HistoryTableEnabled\": false, \"ControlSchema\": \"\"}, \"ChangeProcessingTuning\": {\"BatchApplyTimeoutMax\": 30, \"BatchApplyPreserveTransaction\": true, \"MemoryKeepTime\": 60, \"BatchApplyMemoryLimit\": 500, \"BatchSplitSize\": 0, \"StatementCacheSize\": 50, \"MinTransactionSize\": 1000, \"MemoryLimitTotal\": 1024, \"BatchApplyTimeoutMin\": 1, \"CommitTimeout\": 1}, \"TargetMetadata\": {\"SupportLobs\": false, \"LoadMaxFileSize\": 0, \"LimitedSizeLobMode\": true, \"FullLobMode\": false, \"TargetSchema\": \"\", \"LobMaxSize\": 32, \"ParallelLoadThreads\": 0, \"LobChunkSize\": 64, \"ParallelLoadBufferSize\": 0, \"BatchApplyEnabled\": false}, \"ChangeProcessingDdlHandlingPolicy\": {\"HandleSourceTableTruncated\": true, \"HandleSourceTableAltered\": true, \"HandleSourceTableDropped\": true}, \"FullLoadSettings\": {\"CreatePkAfterFullLoad\": false, \"TargetTablePrepMode\": \"DROP_AND_CREATE\", \"StopTaskCachedChangesApplied\": false, \"TransactionConsistencyTimeout\": 600, \"StopTaskCachedChangesNotApplied\": false, \"MaxFullLoadSubTasks\": 8, \"CommitRate\": 10000}, \"ErrorBehavior\": {\"TableErrorEscalationPolicy\": \"STOP_TASK\", \"RecoverableErrorThrottlingMax\": 1800, \"ApplyErrorDeletePolicy\": \"IGNORE_RECORD\", \"ApplyErrorEscalationPolicy\": \"LOG_ERROR\", \"ApplyErrorUpdatePolicy\": \"LOG_ERROR\", \"DataTruncationErrorPolicy\": \"LOG_ERROR\", \"RecoverableErrorInterval\": 5, \"RecoverableErrorCount\": -1, \"FullLoadIgnoreConflicts\": true, \"DataErrorEscalationPolicy\": \"SUSPEND_TABLE\", \"ApplyErrorInsertPolicy\": \"LOG_ERROR\", \"ApplyErrorEscalationCount\": 0, \"RecoverableErrorThrottling\": true, \"TableErrorEscalationCount\": 0, \"TableErrorPolicy\": \"SUSPEND_TABLE\", \"DataErrorEscalationCount\": 0, \"DataErrorPolicy\": \"LOG_ERROR\"}, \"StreamBufferSettings\": {\"StreamBufferSizeInMB\": 8, \"StreamBufferCount\": 3, \"CtrlStreamBufferSizeInMB\": 5}}"
+      SourceEndpointArn:
+        Ref: DMSEndpointS3
+      TableMappings: "{\"rules\":[{\"rule-type\":\"selection\",\"rule-id\":\"1\",\"rule-name\":\"1\",\"object-locator\":{\"schema-name\":\"dynamoschema\",\"table-name\":\"userprofile\"},\"rule-action\":\"include\"}]}"
+      Tags:
+        -
+          Key: "Name"
+          Value: "importFromS3"
+        -
+          Key: "project"
+          Value: "exampleImport"
+      TargetEndpointArn:
+        Ref: DMSEndpointDynamoDB

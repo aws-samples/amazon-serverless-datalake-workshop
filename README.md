@@ -37,9 +37,13 @@ By storing the data on Amazon S3, you have a cost-effective service that can sto
 
 > ***For this lab, ensure the current AWS region is US East (N. Virginia).***
 
-Here is the Amazon CloudFormation script that the cloud engineering team made available. <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverless-data-lake.yaml" target="_blank">Create a stack</a> This template will provide a headstart in configuring the data lake.
+Here is the Amazon CloudFormation script that the cloud engineering team made available. <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvet-2018-serverless-datalake&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverless-data-lake.yaml" target="_blank">Create a stack</a> This template will provide a headstart in configuring the data lake.
 
 [Annotated CloudFormation Template ](serverlessdatalake2018.html)
+
+## High Level Serverless Data Lake Architecture
+
+![data lake architecture](/images/datalakearc.png)
 
 ## Serverless Data Lake Components
 * S3

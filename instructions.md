@@ -12,7 +12,7 @@ The logs are to be written to Cloudwatch logs and they have configured the subsc
 Kinesis Firehouse provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //*stackname*/apache CloudWatch Log Group.
 
 ### Lab
-This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed. Go to the CloudFormation <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home" target="_blank">console</a> click the checkbox next to stack for this workshop and look for the 'Outputs' tab below. The key will be IngestionBucket and copy the value onto your clipboard. 
+This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed.
 
 We will verify that the log files are moving from the cloudwatch logs to the S3 bucket via Kinesis Firehouse.
 
@@ -80,9 +80,19 @@ These datasets are downloaded into the S3 bucket at:
 ```
 
 ## Create an IAM Role
-Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role. For role permission make sure you select both AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
+Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role or follow the steps below
 
-> In the Lab guide, **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name, then please substitute your role name for **AWSGlueServiceRoleDefault**
+
+1. Click [here](https://console.aws.amazon.com/iam/) to open IAM console.
+2. In the left navigation pane, choose **Roles**.
+3. Choose **Create role**.
+4. For role type, choose **AWS Service**, find and choose **Glue**, and choose **Next: Permissions**.
+5. On the **Attach permissions policy** page, choose the policies that contain the required permissions; choose the AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
+6. Choose **Next: Review**.
+7. For Role name, type a name for your role; for example, **AWSGlueServiceRoleDefault**. 
+8. Choose **Create Role**.
+
+> In the Lab guide **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name then please substitute your role name for **AWSGlueServiceRoleDefault**.
 
 ## Discover Data
 
@@ -401,6 +411,7 @@ anpnlrpnlm9 |	Dogs |	12
 # Join and relationalize data with AWS Glue
 
 In previous sections we looked at how to work with semi-structured datasets to make it easily queryable and consumable. In real world hardly anyone works with just one dataset. Normally you would end up working with multiple datasets from various datasources having different schemas. 
+
 In this exercise we will see how you can leverage AWS Glue to join different datasets to load, transform, and rewrite data in AWS S3 so that it can easily and efficiently be queried and analyzed.
 You will work with `useractivity` and `userprofile` datasets, the table definitions for which were created in previous section
 
@@ -599,7 +610,7 @@ zipcode | 	zipCodeType |	city |	state	| locationtype |	lat |	long |	uslocation |
 -------- | ------------ | ---- | ------- | ---------- | ------ | ---- | -------- | --------------
 00705 |	STANDARD | 	AIBONITO |	PR |	PRIMARY |	18.14 |	-66.26 |	NA-US-PR-AIBONITO |	false
 00610 |	STANDARD |	ANASCO |	PR |	PRIMARY	 | 18.28 |	-67.14 |	NA-US-PR-ANASCO	| false
-00611 |	PO BOX |	ANGELES	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	false
+00611 |	PO BOX |	ANGELES |	PR |	PRIMARY	| 18.28	| -66.79 |	NA-US-PR-ANGELES |	false
 
 2. Choose **New Query**, copy the following statement into the query pane, and then choose **Run Query** to query for the number of page views per state to see which users interest in products. For this query we will join username across tables `joindatasets` and `zipcodesdata` 
 
@@ -921,28 +932,28 @@ Go to the Glue Console and Select the Glue Development Endpoint created by the C
 ## Bonus Lab #2: Create Amazon Redshift Cluster
 This lab will show to take advantage of Redshift Spectrum to add external data to your Redshift Data Warehouse.
 
-### Part 1: Create the cluster
+## Create Amazon Redshift Cluster
 
 In this task, you will create an Amazon Redshift cluster. You will need a SQL client such as SQLWorkbenchJ to connect to the redshift cluster.
 
 **Make sure to delete the Redshift cluster after you complete the lab.**
 
 1. Open the AWS Console home page. Type 'Redshift' in the search box and load the Redshift console.
-1. Click 'Quick Launch' to launch a cluster
-  1. Type Type: `ds2.xlarge`
-  1. Number of Compute Nodes: `1`
-  1. Cluster Identifier: `serverless-datalake`
-  1. Master user name: `awsuser`
-  1. Master user password: *create your own password*
-  1. Confirm password: *re-enter password*
-  1. Database Port: `5439`
-  1. Available IAM Roles: `stack-name-redshift`
-1. Got to the details for the newly created cluster.
-1. After the cluster is in the `ready` state, search for the 'JDBC URLURL' and copy it onto your clipbord.
-1. Using the JDBC URL, connect to your SQL Client. For for information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
+1. Click **Quick Launch** to launch a cluster
+   - Type Type: `ds2.xlarge`
+   - Number of Compute Nodes: `1`
+   - Cluster Identifier: `serverless-datalake`
+   - Master user name: `awsuser`
+   - Master user password: *create your own password*
+   - Confirm password: *re-enter password*
+   - Database Port: `5439`
+   - Available IAM Roles: `stack-name-redshift`
+1. Go to the details for the newly created cluster.
+1. After the cluster is in the `ready` state, search for the **JDBC URL** and copy it onto your clipbord.
+1. Using the **JDBC URL**, connect to your SQL Client. For more information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
 
 
-### Part 2: Create an External Table
+### Create an External Table
 
 In this task, you will create an external table. Unlike a normal Redshift table, an external table references data stored in Amazon S3
 
@@ -962,7 +973,7 @@ You will start by defining an external schema. The external schema references a 
 ```
             
 
-Note:  If you receive a message that Schema "spectrum" already exists, continue with the next step. You will now create an external table that will be stored in the spectrum schema
+> **Note:**  If you receive a message that Schema "spectrum" already exists, continue with the next step. You will now create an external table that will be stored in the spectrum schema
 
 * Run this command in your SQL client to run a query against an external table:
 
@@ -1036,8 +1047,50 @@ SELECT * FROM local_weblogs.useractivity_byuser LIMIT 100;
 
 That concludes the Redshift component of the lab. Be sure to delete your Redshift cluster.
 
+## AWS Database Migration Service (DMS) - S3 DynamoDB integration
+
+AWS DMS is a cloud service that makes it easy to migrate relational databases, data warehouses, NoSQL databases, and other types of data stores. You can use AWS DMS to migrate your data into the AWS Cloud, between on-premises instances, or between combinations of cloud and on-premises setups. You can perform one-time migrations or can replicate ongoing changes to keep the source and targets in sync. 
+AWS DMS supports a number of sources and targets for migration, for more details refer [documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.html)
+As part of your data lake you might need to move data from on-premise or other locations into a centralized repository for analysis. As part of this workshop we will look how you can leverage DMS to move user profile dataset which is uploaded to S3 to DynamoDB
+
+#### Prerequisites
+You will need at least 2 IAM roles e.g. `dms-cloudwatch-logs-role` for pushing logs to Amazon CloudWatch and the `dms-vpc-role` for use by the DMS service. For more infromation on creating these roles, take a look at [Creating the IAM Roles to Use with the AWS CLI and AWS DMS API](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.APIRole.html) in the DMS documentation.
+For DMS repliaction instance, you will need an VPC with subnets and security groups configured to allow access to AWS DMS services and othe AWS resources like S3 and DynamoDB. For more information, take a look at [Setting Up a Network for a Replication Instance](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.VPC.html)
+When you use Amazon S3 as a source for AWS DMS, the source Amazon S3 bucket that you use must be in the same AWS Region as the AWS DMS replication instance that you use to migrate your data. In addition, the AWS account you use for the migration must have read access to the source bucket. The role assigned to the user account creating the migration task must have S3 permissions for `GetObject` and `ListBucket`. For this workshop you can add these permission to `dms-vpc-role`.
+When working with a DynamoDB database as a target for AWS DMS, make sure that your IAM role allows AWS DMS to assume and grant access to the DynamoDB tables that are being migrated into. If you are using a separate role, make sure that you allow the DMS service to perform `AssumeRole`. The user account creating the migration task must be able to perform the DynamoDB actions `PutItem`, `CreateTable`, `DescribeTable`, `DeleteTable`, `DeleteItem`, and `ListTables`. For this workshop you can add these permission to `dms-vpc-role`.
+
+> **Note:** To keep it simple, for S3 and DynamoDB access you can leverage the AWS managed policies **AmazonS3FullAccess** and **AmazonDynamoDBFullAccess** and attach them to `dms-vpc-role` 
+
+### Create DMS replication server, source and target endpoints and migration tasks
+To perfrom a database migration, DMS needs a replication instance (which is a managed Amazon Elastic Compute Cloud (Amazon EC2) instance that hosts one or more replication tasks), source endpoint (an endpoint to access your source data store), target endpoint (an endpoint to access your target data store)and replication task(s) (task(s) to move a set of data from the source endpoint to the target endpoint)
+You can create the above components either via AWS Management Console or via scripting e.g. Amazon CloudFormation. For this lab we will use a Amazon CloudFormation template to create the required components.
+
+Here is the Amazon CloudFormation template that you can use to spin up the requeired components for DMS, [Create DMS stack](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvet-2018-serverless-datalake-dms&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverlessdatalake2018-dms.yml)
+
+Enter the stack name, choose the replication instance type, enter security group name, S3 bucket name (s3://~ingestionbucket~/raw/userprofile) and role arn to create the stack.
+
+Once the stack creation is complete, open [AWS DMS console](https://console.aws.amazon.com/dms/home) and explore the components that Amazon CloudFormation template created. The CloudFormation will 
+
+- Create a replication instance
+- Create a source endpoint
+- Create a target endpoint
+- Create a target endpoint
+
+> **Note:** For details on S3 source endpoint configuration, refer [AWS Documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.S3.html). For details on DynamoDB endpoint configuration, refer [AWS Documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html)
+
+#### Execute the DMS Task to load userprofile from S3 to DynamoDB
+
+From DMS console select **Tasks** menu and select the task created via CloudFormation and click on **Start/Resume** to execute the task. The task status will change from *Ready* to *Starting* to *Running* to *Load complete*
+After the task is in *Load complete* status, open the DynamoDB console and verify that a new table `userprofile` was created with ~50000 user profile records.
+
+#### Conclusion
+As part of the above exerise we saw how to create a data load pipeline using DMS. You can extend the CloudFormation template to load multiple tables or change the target and source endpoints by simply swapping out the resources in the template.
+
+
+
 # Clean Up
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
 
-**If you created a redshift cluster, make sure to delete the cluster!** Leaving the cluster running can cost hundreds of dollars per month.
+**If you created a redshift cluster, executed DMS lab make sure to delete the cluster and dynamodb table!** Leaving these running can cost hundreds of dollars per month.
+
