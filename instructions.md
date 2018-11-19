@@ -1047,7 +1047,7 @@ SELECT * FROM local_weblogs.useractivity_byuser LIMIT 100;
 
 That concludes the Redshift component of the lab. Be sure to delete your Redshift cluster.
 
-## AWS Database Migration Service (DMS) - S3 DynamoDB integration
+## Bonus Lab #3: AWS Database Migration Service (DMS) - Importing files from S3 to DynamoDB
 
 AWS DMS is a cloud service that makes it easy to migrate relational databases, data warehouses, NoSQL databases, and other types of data stores. You can use AWS DMS to migrate your data into the AWS Cloud, between on-premises instances, or between combinations of cloud and on-premises setups. You can perform one-time migrations or can replicate ongoing changes to keep the source and targets in sync. 
 AWS DMS supports a number of sources and targets for migration, for more details refer [documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.html)
