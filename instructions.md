@@ -9,7 +9,7 @@ The logs are to be written to Cloudwatch logs and they have configured the subsc
 
 
 ## Kinesis Firehouse Delivery Steam
-Kinesis Firehouse provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //*stackname*/apache CloudWatch Log Group.
+Kinesis Firehouse provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //^stackname^/apache CloudWatch Log Group.
 
 ### Lab
 This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed.
@@ -19,7 +19,7 @@ We will verify that the log files are moving from the cloudwatch logs to the S3 
 **It may take a few minutes for data to show up in Kinesis**
 
 1. Under Services, Type 'Kinesis'
-1. Under 'Kinesis Firehouse Delivery Streams', select *stack name*-ApacheLogsKinesis-*random id*
+1. Under 'Kinesis Firehouse Delivery Streams', select ^stackname^-ApacheLogsKinesis-*random id*
 1. Click the monitoring tab
 1. Here you will see the delivery stream metrics.
 1. **Incoming Bytes**: The amount of data ingested by the stream 
@@ -42,7 +42,7 @@ We will verify that the log files are moving from the cloudwatch logs to the S3 
 
 <details><summary>Additional Details</summary>
 
-There's a lot going on here and worth exploring. In reality, there is a lambda function generating the log data and writing it to cloud watch logs. Cloudwatch logs then has a Subscription Filter that will write any logs in the /*stackname*/apache log group to Kinesis Firehose.
+There's a lot going on here and worth exploring. In reality, there is a lambda function generating the log data and writing it to cloud watch logs. Cloudwatch logs then has a Subscription Filter that will write any logs in the /^stackname^/apache log group to Kinesis Firehose.
 
 You can see this configured in the CloudFormation script.
 <code>
@@ -74,16 +74,16 @@ Below are the datasets that we would be working with:
 These datasets are downloaded into the S3 bucket at:
 
 ```
- s3://~ingestionbucket~/raw/useractivity
- s3://~ingestionbucket~/raw/userprofile
- s3://~ingestionbucket~/raw/zipcodes
+ s3://^ingestionbucket^/raw/useractivity
+ s3://^ingestionbucket^/raw/userprofile
+ s3://^ingestionbucket^/raw/zipcodes
 ```
 
 ## Create an IAM Role
-Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html) on how to create the role or follow the steps below
+Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer <a href="https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html" href="_blank">AWS Glue documentation</a> on how to create the role or follow the steps below
 
 
-1. Click [here](https://console.aws.amazon.com/iam/) to open IAM console.
+1. Click <a href="https://console.aws.amazon.com/iam/" target="_blank">here</a> to open IAM console.
 2. In the left navigation pane, choose **Roles**.
 3. Choose **Create role**.
 4. For role type, choose **AWS Service**, find and choose **Glue**, and choose **Next: Permissions**.
@@ -128,7 +128,7 @@ Lakendra |	Cacciola |	nealaoaaoc9 |	LakendraCacciola@nytimes.com | F |	552-251-2
 
 ### Create Glue Data Catalog Database
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the [AWS Management console for Amazon Glue](https://console.aws.amazon.com/glue/home?region=us-east-1).
+1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home?region=us-east-1" target="_blank">AWS Management console for Amazon Glue</a>.
 2. To analyze the weblogs dataset, you start with a set of data in S3. First, you will create a database for this workshop within AWS Glue. A database is a set of associated table definitions, organized into a logical group.
 3. From left hand menu of the AWS Glue console, click **Databases**
 4. Click on the **Add Database** button.
@@ -144,11 +144,11 @@ AWS Glue crawler will create the following tables in the `weblogs` database:
 
 #### Steps to create crawler
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the [AWS Management console for Amazon Glue](https://console.aws.amazon.com/glue/home?region=us-east-1).
+1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home?region=us-east-1" target="_blank">AWS Management console for Amazon Glue</a>.
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `rawdatacrawler`, keep the defaults on the page the same and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/raw` S3 bucket location from **Include path**.
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/raw` S3 bucket location from **Include path**.
 5. Expand **Exclude patterns (optional)** section and enter `zipcodes/**` in **Exclude patterns** text box (We will exclude the zipcodes file in this exercise and pick it up later in the lab). Click **Next** button
 6. Choose **No** and click **Next** on **Add another data store**
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
@@ -177,11 +177,11 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
 
 
 #### Steps to create glue job
- As part of this step you will create a glue job, update the default script and run the job. We will be using the AWS Management Console to write and edit the glue scripts but you also have an option of creating a `DevEndpoint` and run your code there. To create the `DevEndpoint` you can either refer **Configure Zeppelin Notebook Server** section of this lab guide or refer [AWS Glue documentation](https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint.html)
+ As part of this step you will create a glue job, update the default script and run the job. We will be using the AWS Management Console to write and edit the glue scripts but you also have an option of creating a `DevEndpoint` and run your code there. To create the `DevEndpoint` you can either refer **Configure Zeppelin Notebook Server** section of this lab guide or refer <a href="https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint.html" target="_blank">AWS Glue documentation</a>
 
  > If you are using Zeppelin Notebook then jump to step 4, create a new note `useractivityjob` and copy paste the code from step 4. Confirm spark as the **Default Interpreter**.
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the [AWS Management console for Amazon Glue](https://console.aws.amazon.com/glue/home?region=us-east-1).
+1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home?region=us-east-1" target="_blank">AWS Management console for Amazon Glue</a>.
 1. From AWS Glue dashboard left hand menu select **Jobs** menu
 2. From **Jobs** menu page, click **Add job** button
 3. Follow the instructions in the **Add job** wizard
@@ -192,7 +192,7 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose `Amazon S3` from **Data store** drop down
 	 - Choose `Parquet` from **Format** drop down
-	 - From **Target path** choose `~ingestionbucket~/weblogs/useractivityconverted` S3 bucket and click **Next** button
+	 - From **Target path** choose `^ingestionbucket^/weblogs/useractivityconverted` S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The system created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -263,7 +263,7 @@ dataframe0 = dataframe0.withColumn('month', month(from_unixtime(unix_timestamp('
 ## @ convert dataframe to glue DynamicFrame and write the output in parquet format partitioned on toppapge column
 useractivity = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
 
-writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": 's3://~ingestionbucket~/weblogs/useractivityconverted', "partitionKeys" :["toppage"]}, format = "parquet", transformation_ctx = "writeUseractivityToS3")
+writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/useractivityconverted', "partitionKeys" :["toppage"]}, format = "parquet", transformation_ctx = "writeUseractivityToS3")
 
 job.commit()
 ```
@@ -275,16 +275,16 @@ job.commit()
 7. Select **X** from the top-right corner to close **Edit Script** page. This will take you back to **Jobs** dashboard
 8. From jobs table select the job `useractivityjob` to open the detail tabs for the job.
 9. Under **History** tab, monitor the **Run status**. The **Run Status** column should go from *Running* to *Stopping* to *Succeeded*
-10. Once the job is succeeded, go to S3 console and browse to `~ingestionbucket~/weblogs/useractivityconverted` S3 bucket
+10. Once the job is succeeded, go to S3 console and browse to `^ingestionbucket^/weblogs/useractivityconverted` S3 bucket
 11. Under the `useractivityconverted` S3 folder you should see parquet files created by the job, partitioned by `toppage` column.
 
 #### Explore the new dataset that we created in previous step
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the [AWS Management console for Amazon Glue](https://console.aws.amazon.com/glue/home?region=us-east-1).
+1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home?region=us-east-1" target="_blank">AWS Management console for Amazon Glue</a>.
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `useractivityconvertedcrawler`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/weblogs/useractivityconverted` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/weblogs/useractivityconverted` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -299,7 +299,7 @@ job.commit()
 	
 # Serverless Analysis of data in Amazon S3 using Amazon Athena
 
-> If you are using Amazon Athena for the first then follow the [Setting Up Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/setting-up.html) to make sure you have the correct permissions to execute the lab.
+> If you are using Amazon Athena for the first then follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab.
 
 Athena integrates with the AWS Glue Data Catalog, which offers a persistent metadata store for your data in Amazon S3. This allows you to create tables and query data in Athena based on a central metadata store available throughout your AWS account and integrated with the ETL and data discovery features of AWS Glue.
 In this workshop we will leverage the AWs Glue Data Catalog `weblogs` for serverless analysis in Amazon Athena
@@ -307,7 +307,7 @@ In this workshop we will leverage the AWs Glue Data Catalog `weblogs` for server
 > **Note:** In regions where AWS Glue is supported, Athena uses the AWS Glue Data Catalog as a central location to store and retrieve table metadata throughout an AWS account.
 
 ### Explore AWS Glue Data Catalog in Amazon Athena
-1. From AWS Management Console, in the search text box, type **Amazon Athena**, select **Amazon Athena** service from the filtered list to open Amazon Athena console OR Open the [AWS Management Console for Athena](https://console.aws.amazon.com/athena/home).
+1. From AWS Management Console, in the search text box, type **Amazon Athena**, select **Amazon Athena** service from the filtered list to open Amazon Athena console OR Open the <a href="https://console.aws.amazon.com/athena/home" target="_blank">AWS Management Console for Athena</a>.
 2. If this is your first time visiting the AWS Management Console for Athena, you will get a Getting Started page. Choose **Get Started** to open the Query Editor. If this isn't your first time, the Athena Query Editor opens.
 3. Make a note of the AWS region name, for example, for this lab you will need to choose the **US East (N. Virginia)** region.
 4. In the **Athena Query Editor**, you will see a query pane with an example query. Now you can start entering your query in the query pane.
@@ -419,7 +419,7 @@ You will work with `useractivity` and `userprofile` datasets, the table definiti
 
  > If you are using Zeppelin Notebook then jump to step 4, create a new note `joindatasetsjob` and copy paste the code from step 4. Confirm spark as the **Default Interpreter**.
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the [AWS Management Console for AWS Glue](https://console.aws.amazon.com/glue/home).
+1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home" target="_blank">AWS Management Console for AWS Glue</a>.
 2. From **Jobs** menu page, click **Add job** button
 3. Follow the instructions in the **Add job** wizard
    - Under **Job properties** step, Enter `joindatasetsjob` in the **Name** text box
@@ -429,7 +429,7 @@ You will work with `useractivity` and `userprofile` datasets, the table definiti
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from **Data store** drop down
 	 - Choose **Parquet** from **Format** drop down
-	 - From **Target path** choose `~ingestionbucket~/weblogs/joindatasets` S3 bucket and click **Next** button
+	 - From **Target path** choose `^ingestionbucket^/weblogs/joindatasets` S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -494,7 +494,7 @@ joined = Join.apply(userprofile, useractivity, 'dy_username', 'username').drop_f
 
 glueContext.write_dynamic_frame.from_options(frame = joined,
           connection_type = "s3",
-          connection_options = {"path": 's3://~ingestionbucket~/weblogs/joindatasets'},
+          connection_options = {"path": 's3://^ingestionbucket^/weblogs/joindatasets'},
           format = "parquet")
 
 job.commit()
@@ -507,16 +507,16 @@ job.commit()
 7. Select **X** from the right corner to close **Edit Script** page. This will take you back to **Jobs** dashboard
 8. From jobs table select the job `joindatasetsjob` to open the detail tabs for the job.
 9. Under **History** tab, monitor the *Run status*. The *Run Status* column should go from "Running" to "Stopping" to "Succeeded"
-10. Once the job is succeeded, go to S3 console and browse to `~ingestionbucket~/weblogs/joindatasets` S3 bucket
+10. Once the job is succeeded, go to S3 console and browse to `^ingestionbucket^/weblogs/joindatasets` S3 bucket
 11. Under the `joindatasets` S3 folder you should see parquet files created by the job
 
 #### Explore the new dataset created in previous step 
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the [AWS Management Console for AWS Glue](https://console.aws.amazon.com/glue/home).
+1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home" blank="_blank">AWS Management Console for AWS Glue</a>.
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `joindatasetscrawler`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/weblogs/joindatasets` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -536,10 +536,10 @@ In previous sections we saw how Athena can leverage AWS Glue Data Catalog. In th
 For this exercise we will use the zip code to city and state mapping from below S3 bucket
 
 ```
-  s3://~ingestionbucket~/raw/zipcodes
+  s3://^ingestionbucket^/raw/zipcodes
 
 ```
-> Note: The above dataset is listed [here](http://federalgovernmentzipcodes.us/)
+> Note: The above dataset is listed <a href="http://federalgovernmentzipcodes.us/" target="_blank">here</a>
 
 The `zipcodedata.csv` file contains data in CSV format like below:
 
@@ -584,7 +584,7 @@ WITH SERDEPROPERTIES (
   'separatorChar'=',') 
 STORED AS TEXTFILE
 LOCATION
-  's3://~ingestionbucket~/raw/zipcodes'
+  's3://^ingestionbucket^/raw/zipcodes'
 TBLPROPERTIES ("skip.header.line.count"="1")
 
 ```
@@ -767,7 +767,7 @@ In order to protect sensitive data, we will want to eliminate columns or hash se
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from **Data store** drop down
 	 - Choose **Parquet** from **Format** drop down
-	 - From **Target path** choose `~ingestionbucket~/weblogs/userprofile-secure` S3 bucket and click **Next** button
+	 - From **Target path** choose `^ingestionbucket^/weblogs/userprofile-secure` S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -817,7 +817,7 @@ dataframe0 = dataframe0.drop('cc').drop('ssn').drop('password')
 datasource1 = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
 
 
-datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": 's3://~ingestionbucket~/weblogs/userprofile-secure'}, format = "parquet", transformation_ctx = "datasink4")
+datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/userprofile-secure'}, format = "parquet", transformation_ctx = "datasink4")
 
 job.commit()
 ```
@@ -828,7 +828,7 @@ job.commit()
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `userprofile-secure`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://~ingestionbucket~/weblogs/userprofile-secure` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/weblogs/userprofile-secure` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
@@ -859,7 +859,7 @@ CREATE TABLE IF NOT EXISTS userprofileparquet
   WITH (format='PARQUET', 
   		parquet_compression='SNAPPY', 
   		partitioned_by=ARRAY['age'], 
-  		external_location='s3://~ingestionbucket~/weblogs/ctas-sample') AS
+  		external_location='s3://^ingestionbucket^/weblogs/ctas-sample') AS
 	SELECT first_name, 
 		   last_name, 
 		   username, 
@@ -875,12 +875,12 @@ Once the query is run, you can look at the list of tables in Athena and see this
 
 #### Extra Credit - Test Role Based Access
 
-1. Create 2 new users, one has access to s3://~ingestionbucket~/prepared/userprofile-secure, one does not.
+1. Create 2 new users, one has access to `s3://^ingestionbucket^/prepared/userprofile-secure`, one does not.
 1. Run Athena query against Customer with user1 and user2
 1. Run Athena query against CustomerRestricted with user1 and user2
 
 ### Live Data Feed
-What about the data from the Kinesis stream? That is being written to the s3://~ingestionbucket~/weblogs/live location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
+What about the data from the Kinesis stream? That is being written to the `s3://^ingestionbucket^/weblogs/live` location. Now that you've used the crawler a few times, on your own create a new crawler that creates the table for the data populated by the kinesis firehose stream.
 
 # Advanced AWS Users
 The following sections are for more advanced AWS users. These labs will create EC2 instance and require users to create an SSH connection into the instances to complete the configuration.
@@ -907,12 +907,12 @@ The glue endpoint details are in the Output section of the cloudformation stack.
 Go to the Glue Console and Select the Glue Development Endpoint created by the Cloud Engineering team.
 1. Select Action->Create Zeppelin Notebook Server
 1. Go through the Zeppelin Notebook Wizard
-1. CloudFormation stack name: aws-glue-*stackname*
-1. Select the role for this notebook server: *stackname*-notebook-role
+1. CloudFormation stack name: aws-glue-^stackname^
+1. Select the role for this notebook server: ^stackname^-notebook-role
 1. KeyPair: Select the key pair from the prequisites
 1. Attach a Public IP (True)
 1. Notebook Username: Admin
-1. Notebook S3 Path: s3://*~ingestionbucket~*/admin
+1. Notebook S3 Path: s3://*^ingestionbucket^*/admin
 1. Subnet: Pick a public subnet. Not sure which subnet is public? <a href="https://console.aws.amazon.com/vpc/home?region=us-east-1#subnets:sort=SubnetId" target="_blank">Subnet Console<a> Look at the Route Table tab of the subnet and see if the route to 0.0.0.0/0 starts with igw.
 1. Click Finish. This will kick off a cloud formation script that builds out the notebook server.
 1. After the notebook server is created, its status changes to CREATE_COMPLETE in the CloudFormation console. Example the Resources section and click the link by the 'Zeppelin Instance' resource.
@@ -947,10 +947,10 @@ In this task, you will create an Amazon Redshift cluster. You will need a SQL cl
    - Master user password: *create your own password*
    - Confirm password: *re-enter password*
    - Database Port: `5439`
-   - Available IAM Roles: `stack-name-redshift`
+   - Available IAM Roles: `^stackname^-redshift`
 1. Go to the details for the newly created cluster.
 1. After the cluster is in the `ready` state, search for the **JDBC URL** and copy it onto your clipbord.
-1. Using the **JDBC URL**, connect to your SQL Client. For more information, [Connect Redshift to SqlWorkbenchJ](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html)
+1. Using the **JDBC URL**, connect to your SQL Client. For more information, <a href="https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-using-workbench.html" target="_blank">Connect Redshift to SqlWorkbenchJ</a>
 
 
 ### Create an External Table
@@ -1050,12 +1050,13 @@ That concludes the Redshift component of the lab. Be sure to delete your Redshif
 ## Bonus Lab #3: AWS Database Migration Service (DMS) - Importing files from S3 to DynamoDB
 
 AWS DMS is a cloud service that makes it easy to migrate relational databases, data warehouses, NoSQL databases, and other types of data stores. You can use AWS DMS to migrate your data into the AWS Cloud, between on-premises instances, or between combinations of cloud and on-premises setups. You can perform one-time migrations or can replicate ongoing changes to keep the source and targets in sync. 
-AWS DMS supports a number of sources and targets for migration, for more details refer [documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.html)
+AWS DMS supports a number of sources and targets for migration, for more details refer <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.html" target="_blank">documentation</a>
 As part of your data lake you might need to move data from on-premise or other locations into a centralized repository for analysis. As part of this workshop we will look how you can leverage DMS to move user profile dataset which is uploaded to S3 to DynamoDB
 
 #### Prerequisites
-You will need at least 2 IAM roles e.g. `dms-cloudwatch-logs-role` for pushing logs to Amazon CloudWatch and the `dms-vpc-role` for use by the DMS service. For more infromation on creating these roles, take a look at [Creating the IAM Roles to Use with the AWS CLI and AWS DMS API](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.APIRole.html) in the DMS documentation.
-For DMS repliaction instance, you will need an VPC with subnets and security groups configured to allow access to AWS DMS services and othe AWS resources like S3 and DynamoDB. For more information, take a look at [Setting Up a Network for a Replication Instance](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.VPC.html)
+You will need at least 2 IAM roles e.g. `dms-cloudwatch-logs-role` for pushing logs to Amazon CloudWatch and the `dms-vpc-role` for use by the DMS service. For more infromation on creating these roles, take a look at <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.APIRole.html" target="_blank">Creating the IAM Roles to Use with the AWS CLI and AWS DMS API</a> in the DMS documentation.
+For DMS repliaction instance, you will need an VPC with subnets and security groups configured to allow access to AWS DMS services and othe AWS resources like S3 and DynamoDB. For more information, take a look at <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.VPC.html" target="_blank">Setting Up a Network for a Replication Instance</a>
+
 When you use Amazon S3 as a source for AWS DMS, the source Amazon S3 bucket that you use must be in the same AWS Region as the AWS DMS replication instance that you use to migrate your data. In addition, the AWS account you use for the migration must have read access to the source bucket. The role assigned to the user account creating the migration task must have S3 permissions for `GetObject` and `ListBucket`. For this workshop you can add these permission to `dms-vpc-role`.
 When working with a DynamoDB database as a target for AWS DMS, make sure that your IAM role allows AWS DMS to assume and grant access to the DynamoDB tables that are being migrated into. If you are using a separate role, make sure that you allow the DMS service to perform `AssumeRole`. The user account creating the migration task must be able to perform the DynamoDB actions `PutItem`, `CreateTable`, `DescribeTable`, `DeleteTable`, `DeleteItem`, and `ListTables`. For this workshop you can add these permission to `dms-vpc-role`.
 
@@ -1065,9 +1066,9 @@ When working with a DynamoDB database as a target for AWS DMS, make sure that yo
 To perfrom a database migration, DMS needs a replication instance (which is a managed Amazon Elastic Compute Cloud (Amazon EC2) instance that hosts one or more replication tasks), source endpoint (an endpoint to access your source data store), target endpoint (an endpoint to access your target data store)and replication task(s) (task(s) to move a set of data from the source endpoint to the target endpoint)
 You can create the above components either via AWS Management Console or via scripting e.g. Amazon CloudFormation. For this lab we will use a Amazon CloudFormation template to create the required components.
 
-Here is the Amazon CloudFormation template that you can use to spin up the requeired components for DMS, [Create DMS stack](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvet-2018-serverless-datalake-dms&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverlessdatalake2018-dms.yml)
+Here is the Amazon CloudFormation template that you can use to spin up the requeired components for DMS, <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvent-2018-serverless-datalake-dms&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverlessdatalake2018-dms.yml" target="_blank">Create DMS stack</a>
 
-Enter the stack name, choose the replication instance type, enter security group name, S3 bucket name (s3://~ingestionbucket~/raw/userprofile) and role arn to create the stack.
+Enter the stack name, choose the replication instance type, enter security group name, S3 bucket name (s3://^ingestionbucket^/raw/userprofile) and role arn to create the stack.
 
 Once the stack creation is complete, open [AWS DMS console](https://console.aws.amazon.com/dms/home) and explore the components that Amazon CloudFormation template created. The CloudFormation will 
 
@@ -1076,7 +1077,7 @@ Once the stack creation is complete, open [AWS DMS console](https://console.aws.
 - Create a target endpoint
 - Create a target endpoint
 
-> **Note:** For details on S3 source endpoint configuration, refer [AWS Documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.S3.html). For details on DynamoDB endpoint configuration, refer [AWS Documentation](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html)
+> **Note:** For details on S3 source endpoint configuration, refer <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.S3.html" target="_blank">AWS Documentation</a>. For details on DynamoDB endpoint configuration, refer <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html" target="_blank">AWS Documentation</a>
 
 #### Execute the DMS Task to load userprofile from S3 to DynamoDB
 

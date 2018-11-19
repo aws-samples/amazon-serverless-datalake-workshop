@@ -80,6 +80,8 @@ def process_cfn(event, context):
 def copy_files(event, context):
     print("Received event: " + json.dumps(event, indent=2))
     
+    stackName =  event['ResourceProperties']['StackName']
+
     bucket = os.environ['BUCKET_NAME']
     sourceBucket = os.environ['SOURCE_BUCKET_NAME']
 
@@ -104,7 +106,8 @@ def copy_files(event, context):
     src = s3.Object(sourceBucket, 'instructions/instructions-template.html')
     html = src.get()['Body'].read().decode('utf-8') 
 
-    html = html.replace('~ingestionbucket~', bucket)
+    html = html.replace('^ingestionbucket^', bucket)
+    html = html.replace('^stackname^', stackName)
 
     destination = s3.Object(bucket, 'instructions/instructions.html')
     result = destination.put(Body=html, ACL='public-read', ContentDisposition='inline', ContentType='text/html')
