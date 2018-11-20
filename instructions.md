@@ -1,6 +1,6 @@
 # Welcome to the AWS Serverless Data Lake Workshop
 
-# Ingestion
+# Serverless Ingestion using Amazon Kinesis Firehose
 The first step in the data processing in a data lake is that data needs to land in S3.
 
 The cloud engineering team has created an extract of the user profile database and demographic data into S3. They also were able to create entries in the Glue Data Catalog for this data. They accomplished this through some scripting, but they need help ingesting the web log data from the websites. The weblogs are in a CSV format and they are unsure how to import the data into the Glue Data Catalog.
@@ -62,7 +62,7 @@ Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON for
 </details>
 
 
-# Extract, Transform and Load
+# Serverless Extract, Transform and Load using AWS Glue
 
 Generally, raw data is unstructured/semi-structured and inefficient for querying. In its raw format, Apache Weblogs are difficult to query. Also a lot of times there is always a need to transform the raw datasets by either augmenting or reducing the data to derive meaningful insights.
 As part of this lab we will start with creating the table definitions (schemas) from the raw datasets that we have.
@@ -627,7 +627,7 @@ SELECT state,
 ```
 
 
-# Visualization using Amazon QuickSight
+# Data Visualization using Amazon QuickSight
 In this section we will visualize the data from previous analysis in QuickSight. If you are new to Amazon QuikSight then you will have to sign up for QuickSight, refer this **[Setting Up QuikSight](https://docs.aws.amazon.com/quicksight/latest/user/setup-new-quicksight-account.html#setup-quicksight-for-existing-aws-account)** documentation to get set up to use Amazon QuickSight. If you have only one user (author or admin), you can use Amazon QuickSight for free.
 
 Once you have signed up for QuickSight successfully next step is to grant QuickSight permissions to your AWS resources. Please refer **[Managing Amazon QuickSight Permissions to AWS Resources](https://docs.aws.amazon.com/quicksight/latest/user/managing-permissions.html)** documentation on how to grant these permissions.
@@ -723,7 +723,7 @@ Now that you have configured the data source and created the custom sql, in this
 
 
 
-# Governance
+# Data Governance using AWS Glue
 Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an S3 data lake, there are several ways to protect the data and grant access to the data.
 
 The first layer will be to use IAM policies to grant access to IAM principles to the data in the S3 bucket. This is done with S3 bucket policies and IAM policies attached to IAM users, groups, and roles.
