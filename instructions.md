@@ -5,21 +5,21 @@ The first step in the data processing in a data lake is that data needs to land 
 
 The cloud engineering team has created an extract of the user profile database and demographic data into S3. They also were able to create entries in the Glue Data Catalog for this data. They accomplished this through some scripting, but they need help ingesting the web log data from the websites. The weblogs are in a CSV format and they are unsure how to import the data into the Glue Data Catalog.
 
-The logs are to be written to Cloudwatch logs and they have configured the subscription from cloud watch logs to kinesis firehouse. 
+The logs are to be written to Cloudwatch logs and they have configured the subscription from cloud watch logs to kinesis firehose. 
 
 
-## Kinesis Firehouse Delivery Steam
-Kinesis Firehouse provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //^stackname^/apache CloudWatch Log Group.
+## Kinesis Firehose Delivery Steam
+Kinesis Firehose provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //^stackname^/apache CloudWatch Log Group.
 
 ### Lab
 This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed.
 
-We will verify that the log files are moving from the cloudwatch logs to the S3 bucket via Kinesis Firehouse.
+We will verify that the log files are moving from the cloudwatch logs to the S3 bucket via Kinesis Firehose.
 
 **It may take a few minutes for data to show up in Kinesis**
 
 1. Under Services, Type 'Kinesis'
-1. Under 'Kinesis Firehouse Delivery Streams', select ^stackname^-ApacheLogsKinesis-*random id*
+1. Under 'Kinesis Firehose Delivery Streams', select ^stackname^-ApacheLogsKinesis-*random id*
 1. Click the monitoring tab
 1. Here you will see the delivery stream metrics.
 1. **Incoming Bytes**: The amount of data ingested by the stream 
@@ -88,6 +88,7 @@ Create an IAM role that has permission to your Amazon S3 sources, targets, tempo
 3. Choose **Create role**.
 4. For role type, choose **AWS Service**, find and choose **Glue**, and choose **Next: Permissions**.
 5. On the **Attach permissions policy** page, choose the policies that contain the required permissions; choose the AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
+6. On **Add tags (optional)** page, enter `Name` as **Key** and `reInvent2018-serverless-data-lake` as **Value**.
 6. Choose **Next: Review**.
 7. For Role name, type a name for your role; for example, **AWSGlueServiceRoleDefault**. 
 8. Choose **Create Role**.
@@ -148,7 +149,7 @@ AWS Glue crawler will create the following tables in the `weblogs` database:
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `rawdatacrawler`, keep the defaults on the page the same and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/raw` S3 bucket location from **Include path**.
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Enter `s3://^ingestionbucket^/raw` as S3 bucket location for **Include path**.
 5. Expand **Exclude patterns (optional)** section and enter `zipcodes/**` in **Exclude patterns** text box (We will exclude the zipcodes file in this exercise and pick it up later in the lab). Click **Next** button
 6. Choose **No** and click **Next** on **Add another data store**
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
@@ -159,7 +160,7 @@ AWS Glue crawler will create the following tables in the `weblogs` database:
 12. The crawler will go into *Starting* to *Stopping* to *Ready* sate
 13. Once the crawler is in *Ready* state, from left hand menu select **Databases**
 14. From **Databases** page select *weblogs* database and select **Tables in weblogs** link. You should see two tables `useractvity` and `userprofile` listed.
-15. From **Tables** page, select `useractvity` table and explore the table definition that glue crawler created.
+15. From **Tables** page, select `useractivity` table and explore the table definition that glue crawler created.
 16. From **Tables** page, select `userprofile` table and explore the table definition that glue crawler created.
 
 
@@ -192,13 +193,11 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose `Amazon S3` from **Data store** drop down
 	 - Choose `Parquet` from **Format** drop down
-	 - From **Target path** choose `^ingestionbucket^/weblogs/useractivityconverted` S3 bucket and click **Next** button
+	 - From **Target path** enter `s3://^ingestionbucket^/weblogs/useractivityconverted` as S3 bucket and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The system created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
    - Select all the code under **Edit Script** page replace it with below
-
-> ***Replace the S3 bucket path in the script below with your S3 bucket path***
 
 ``` python
 ## @ Import the AWS Glue libraries, pySpark we'll need 
@@ -275,7 +274,7 @@ job.commit()
 7. Select **X** from the top-right corner to close **Edit Script** page. This will take you back to **Jobs** dashboard
 8. From jobs table select the job `useractivityjob` to open the detail tabs for the job.
 9. Under **History** tab, monitor the **Run status**. The **Run Status** column should go from *Running* to *Stopping* to *Succeeded*
-10. Once the job is succeeded, go to S3 console and browse to `^ingestionbucket^/weblogs/useractivityconverted` S3 bucket
+10. Once the job is succeeded, go to S3 console and browse to `s3://^ingestionbucket^/weblogs/useractivityconverted` S3 bucket
 11. Under the `useractivityconverted` S3 folder you should see parquet files created by the job, partitioned by `toppage` column.
 
 #### Explore the new dataset that we created in previous step
@@ -284,14 +283,14 @@ job.commit()
 2. From **AWS Glue** dashboard, from left hand menu select **Crawlers** menu item
 3. From **Crawlers** page, click **Add crawler** button
 4. On **Crawler Info** wizard step, enter crawler name `useractivityconvertedcrawler`, keep the default on the page and click **Next** button
-5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/weblogs/useractivityconverted` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
+5. On **Data Store** step, choose S3 from **Choose a data store** drop down. Enter `s3://^ingestionbucket^/weblogs/useractivityconverted` as S3 bucket location for **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
 7. On **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
-9. On **Output** step, choose `weblogs` database from **Database** drop down. Keep default the same and click **Next** button
-10. On **Review all steps** step, review the selections and click **Finish**. this should take to back to **Crawlers** dashboard
+9. On **Output** step, choose `weblogs` database from **Database** drop down. Keep defaults the same and click **Next** button
+10. On **Review all steps** step, review the selections and click **Finish**. This should take you back to **Crawlers** dashboard
 11. On **Crawlers** dashboard, select the crawler that you created in above steps and click **Run Crawler** button
-12. The crawler will go into *Starting* to *Stopping* to *Ready* state
+12. The crawler status should change from *Starting* to *Stopping* to *Ready* state
 13. Once the crawler is in *Ready* state, from left hand menu select **Databases**
 14. From **Databases** page select `weblogs` database and select **Tables in weblogs** link. You should see 3 tables `useractvity`, `userprofile` and `useractivityconverted` listed.
 15. From `Tables` page, select `useractivityconverted` table and explore the table definition that glue crawler created.
@@ -299,10 +298,12 @@ job.commit()
 	
 # Serverless Analysis of data in Amazon S3 using Amazon Athena
 
-> If you are using Amazon Athena for the first then follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab.
+> If you are using Amazon Athena for the first time then follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab.
+
+> In this workshop we will leverage the AWS Glue Data Catalog `weblogs` for serverless analysis in Amazon Athena. If you are new to Athena then you can leverage AWS Glue Data Catalog but if you had previously created databases and tables using Athena or Amazon Redshift Spectrum but not upgraded Athena to use AWS Glue Data Catalog then please follow the steps in [Upgrading to the AWS Glue Data Catalog Step-by-Step](https://docs.aws.amazon.com/athena/latest/ug/glue-upgrade.html) documentation before proceeding further.
 
 Athena integrates with the AWS Glue Data Catalog, which offers a persistent metadata store for your data in Amazon S3. This allows you to create tables and query data in Athena based on a central metadata store available throughout your AWS account and integrated with the ETL and data discovery features of AWS Glue.
-In this workshop we will leverage the AWs Glue Data Catalog `weblogs` for serverless analysis in Amazon Athena
+
 
 > **Note:** In regions where AWS Glue is supported, Athena uses the AWS Glue Data Catalog as a central location to store and retrieve table metadata throughout an AWS account.
 
@@ -637,7 +638,7 @@ Once you have signed up for QuickSight successfully next step is to grant QuickS
 1. From Amazon QuickSight dashboard console, Click on **Manage data** on the top-right corner of the webpage to review existing data sets.
 2. Click on **New data set** on the top-left corner of the webpage and review the options.
 3. Select **Athena** as a Data source.
-4. On **New Athena data source** dialog box, enter **Data source name** e.g. MyAthenaDatasource
+4. On **New Athena data source** dialog box, enter **Data source name** `weblogs-athena-datasource`
 5. Click on **Validate connection** to make sure you have the permissions to access Athena.
 6. Click **Create data source**. 
 7. Choose `weblogs` database from **Database: contain sets of tables** dropdown, all tables under `weblogs` should get listed. You can choose a table to visualize the data or create a custom SQL. In this lab we will create a custom SQL.
@@ -671,7 +672,7 @@ Once you have signed up for QuickSight successfully next step is to grant QuickS
       - On **Edit date format** dialog, enter the format `dd/MMM/yyyy:HH:mm:ss` and click **Validate**. You should see that QuickSight is now able to recognize the `timestamp` as a valid **Date** type
       - Click **Update** to apply the change.  
   19. From **Fields** pane, filter the dataset to remove columns that are note required for analysis. Uncheck columns `bytes`, `firstname`, `zip`,`zipcodetype`, `http`, `uslocation`, `locationtype`,`decommissioned`
-  20. (Optional) At top of the page, enter name for the dashboard E.g. MyFirstDashboard
+  20. (Optional) At top of the page, enter name for the dashboard `weblogs-insights`
   20. Click **Save & visualize** 
   
 ### Visualizing the data using Amazon QuickSight
@@ -686,7 +687,7 @@ Now that you have configured the data source and created the custom sql, in this
 4. Based on above selections QuickSight should plot the data respectively across U.S maps.
 5. Click on the field name `username` in **Size** from **Field wells** to reveal a sub-menu.
 5. Select **Aggregate:Count distinct** to aggregate by distinct users.
-5. From the visualization to see which state has the maximum number of users for the website.
+5. From the visualization you can see which state has the maximum number of users for the website.
 
 #### Add age based filter to visualize the dataset 
 
@@ -699,7 +700,7 @@ Now that you have configured the data source and created the custom sql, in this
 6. To add filter to `age`,
     - Select the dropdown for `age` field from the **Fields list**. 
     - Select **Add filter for this field** from the dropdown menu.
-    - From **Applied Fiters**, clcik **Include - all** to open the current filters
+    - From **Applied Fiters**, click **Include - all** to open the current filters
     - From the age list select `25` and click **Apply** and then **Close**
 7. To filter the data only for the age 25
 
@@ -727,7 +728,7 @@ Most large organizations will have different data classification tiers and a num
 
 The first layer will be to use IAM policies to grant access to IAM principles to the data in the S3 bucket. This is done with S3 bucket policies and IAM policies attached to IAM users, groups, and roles.
 
-This approach is required if the consumer of the date requires direct access to the files or queries through Amazon Athena.
+This approach is required if the consumer of the data requires direct access to the files or queries through Amazon Athena.
 
 The second approach is to protect the data at the serving layer, which may be through an EMR cluster or Redshift cluster. With EMR, the cluster can authenticate users using Kerberos and Redshift can be authenticated using Redshift users or IAM credentials.
 
