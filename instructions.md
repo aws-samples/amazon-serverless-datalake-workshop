@@ -9,7 +9,7 @@ The logs are to be written to Cloudwatch logs and they have configured the subsc
 
 
 ## Kinesis Firehose Delivery Steam
-Kinesis Firehose provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams  publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //^stackname^/apache CloudWatch Log Group.
+Kinesis Firehose provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //^stackname^/apache CloudWatch Log Group.
 
 ### Lab
 This section requires outputs from the CloudFormation stack output. If the cloudformation stack has not yet completed, please wait until it has completed.
@@ -57,14 +57,14 @@ You can see this configured in the CloudFormation script.
 
 The was done automatically in the lab because setting up the IAM Roles can be very tedious and time consuming.
 
-Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON format. Not only are they are harder to read in a compressed json format, aren't written in a JSON compliant format. Each line is a JSON file, but there aren't commas between each line so JSON parsing fails. We use a template that will run a lambda function that uncompresses the file and returns the data payload which is in a CSV format.
+Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON format. Not only are they harder to read in a compressed json format, aren't written in a JSON compliant format. Each line is a JSON file, but there aren't commas between each line so JSON parsing fails. We use a template that will run a lambda function that uncompresses the file and returns the data payload which is in a CSV format.
 
 </details>
 
 
 # Serverless Extract, Transform and Load using AWS Glue
 
-Generally, raw data is unstructured/semi-structured and inefficient for querying. In its raw format, Apache Weblogs are difficult to query. Also a lot of times there is always a need to transform the raw datasets by either augmenting or reducing the data to derive meaningful insights.
+Generally, raw data is unstructured/semi-structured and inefficient for querying. In its raw format, Apache Weblogs are difficult to query. Also, a lot of times there is always a need to transform the raw datasets by either augmenting or reducing the data to derive meaningful insights.
 As part of this lab we will start with creating the table definitions (schemas) from the raw datasets that we have.
 Below are the datasets that we would be working with:
 - `useractivity.csv`
@@ -314,7 +314,7 @@ Athena integrates with the AWS Glue Data Catalog, which offers a persistent meta
 4. In the **Athena Query Editor**, you will see a query pane with an example query. Now you can start entering your query in the query pane.
 5. On left hand side of the screen, under **Database** drop down select `weblogs` database if not already selected. After selecting `weblogs` you should see tables `useractivity`, `userprofile` and `useractivityconverted` listed.
 
-### Quering data from Amazon S3
+### Querying data from Amazon S3
 Now that you have created the tables, you can run queries on the data set and see the results in AWS Management Console for Amazon Athena.
 
 1. Choose **New Query**, copy the following statement into the query pane, and then choose **Run Query**.
@@ -411,7 +411,7 @@ anpnlrpnlm9 |	Dogs |	12
 
 # Join and relationalize data with AWS Glue
 
-In previous sections we looked at how to work with semi-structured datasets to make it easily queryable and consumable. In real world hardly anyone works with just one dataset. Normally you would end up working with multiple datasets from various datasources having different schemas. 
+In previous sections we looked at how to work with semi-structured datasets to make it easily queryable and consumable. In real world hardly, anyone works with just one dataset. Normally you would end up working with multiple datasets from various datasources having different schemas. 
 
 In this exercise we will see how you can leverage AWS Glue to join different datasets to load, transform, and rewrite data in AWS S3 so that it can easily and efficiently be queried and analyzed.
 You will work with `useractivity` and `userprofile` datasets, the table definitions for which were created in previous section
@@ -508,7 +508,7 @@ job.commit()
 7. Select **X** from the right corner to close **Edit Script** page. This will take you back to **Jobs** dashboard
 8. From jobs table select the job `joindatasetsjob` to open the detail tabs for the job.
 9. Under **History** tab, monitor the *Run status*. The *Run Status* column should go from "Running" to "Stopping" to "Succeeded"
-10. Once the job is succeeded, go to S3 console and browse to `^ingestionbucket^/weblogs/joindatasets` S3 bucket
+10. Once the job is succeeded, go to S3 console and browse to `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket
 11. Under the `joindatasets` S3 folder you should see parquet files created by the job
 
 #### Explore the new dataset created in previous step 
@@ -628,7 +628,7 @@ SELECT state,
 
 
 # Data Visualization using Amazon QuickSight
-In this section we will visualize the data from previous analysis in QuickSight. If you are new to Amazon QuikSight then you will have to sign up for QuickSight, refer this **[Setting Up QuikSight](https://docs.aws.amazon.com/quicksight/latest/user/setup-new-quicksight-account.html#setup-quicksight-for-existing-aws-account)** documentation to get set up to use Amazon QuickSight. If you have only one user (author or admin), you can use Amazon QuickSight for free.
+In this section we will visualize the data from previous analysis in QuickSight. If you are new to Amazon QuickSight then you will have to sign up for QuickSight, refer this **[Setting Up QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/setup-new-quicksight-account.html#setup-quicksight-for-existing-aws-account)** documentation to get set up to use Amazon QuickSight. If you have only one user (author or admin), you can use Amazon QuickSight for free.
 
 Once you have signed up for QuickSight successfully next step is to grant QuickSight permissions to your AWS resources. Please refer **[Managing Amazon QuickSight Permissions to AWS Resources](https://docs.aws.amazon.com/quicksight/latest/user/managing-permissions.html)** documentation on how to grant these permissions.
 
@@ -671,7 +671,7 @@ Once you have signed up for QuickSight successfully next step is to grant QuickS
       - Select **Date** from **Type** menu
       - On **Edit date format** dialog, enter the format `dd/MMM/yyyy:HH:mm:ss` and click **Validate**. You should see that QuickSight is now able to recognize the `timestamp` as a valid **Date** type
       - Click **Update** to apply the change.  
-  19. From **Fields** pane, filter the dataset to remove columns that are note required for analysis. Uncheck columns `bytes`, `firstname`, `zip`,`zipcodetype`, `http`, `uslocation`, `locationtype`,`decommissioned`
+  19. From **Fields** pane, filter the dataset to remove columns that are note required for analysis. Uncheck columns `bytes`, `firstname`, `zip`, `zipcodetype`, `http`, `uslocation`, `locationtype`,`decommissioned`
   20. (Optional) At top of the page, enter name for the dashboard `weblogs-insights`
   20. Click **Save & visualize** 
   
@@ -1058,16 +1058,16 @@ As part of your data lake you might need to move data from on-premise or other l
 You will need at least 2 IAM roles e.g. `dms-cloudwatch-logs-role` for pushing logs to Amazon CloudWatch and the `dms-vpc-role` for use by the DMS service. For more infromation on creating these roles, take a look at <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.APIRole.html" target="_blank">Creating the IAM Roles to Use with the AWS CLI and AWS DMS API</a> in the DMS documentation.
 For DMS repliaction instance, you will need an VPC with subnets and security groups configured to allow access to AWS DMS services and othe AWS resources like S3 and DynamoDB. For more information, take a look at <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.VPC.html" target="_blank">Setting Up a Network for a Replication Instance</a>
 
-When you use Amazon S3 as a source for AWS DMS, the source Amazon S3 bucket that you use must be in the same AWS Region as the AWS DMS replication instance that you use to migrate your data. In addition, the AWS account you use for the migration must have read access to the source bucket. The role assigned to the user account creating the migration task must have S3 permissions for `GetObject` and `ListBucket`. For this workshop you can add these permission to `dms-vpc-role`.
-When working with a DynamoDB database as a target for AWS DMS, make sure that your IAM role allows AWS DMS to assume and grant access to the DynamoDB tables that are being migrated into. If you are using a separate role, make sure that you allow the DMS service to perform `AssumeRole`. The user account creating the migration task must be able to perform the DynamoDB actions `PutItem`, `CreateTable`, `DescribeTable`, `DeleteTable`, `DeleteItem`, and `ListTables`. For this workshop you can add these permission to `dms-vpc-role`.
+When you use Amazon S3 as a source for AWS DMS, the source Amazon S3 bucket that you use must be in the same AWS Region as the AWS DMS replication instance that you use to migrate your data. In addition, the AWS account you use for the migration must have read access to the source bucket. The role assigned to the user account creating the migration task must have S3 permissions for `GetObject` and `ListBucket`. For this workshop you can add these permissions to `dms-vpc-role`.
+When working with a DynamoDB database as a target for AWS DMS, make sure that your IAM role allows AWS DMS to assume and grant access to the DynamoDB tables that are being migrated into. If you are using a separate role, make sure that you allow the DMS service to perform `AssumeRole`. The user account creating the migration task must be able to perform the DynamoDB actions `PutItem`, `CreateTable`, `DescribeTable`, `DeleteTable`, `DeleteItem`, and `ListTables`. For this workshop you can add these permissions to `dms-vpc-role`.
 
 > **Note:** To keep it simple, for S3 and DynamoDB access you can leverage the AWS managed policies **AmazonS3FullAccess** and **AmazonDynamoDBFullAccess** and attach them to `dms-vpc-role` 
 
 ### Create DMS replication server, source and target endpoints and migration tasks
-To perfrom a database migration, DMS needs a replication instance (which is a managed Amazon Elastic Compute Cloud (Amazon EC2) instance that hosts one or more replication tasks), source endpoint (an endpoint to access your source data store), target endpoint (an endpoint to access your target data store)and replication task(s) (task(s) to move a set of data from the source endpoint to the target endpoint)
+To perfrom a database migration, DMS needs a replication instance (which is a managed Amazon Elastic Compute Cloud (Amazon EC2) instance that hosts one or more replication tasks), source endpoint (an endpoint to access your source data store), target endpoint (an endpoint to access your target data store) and replication task(s) (task(s) to move a set of data from the source endpoint to the target endpoint)
 You can create the above components either via AWS Management Console or via scripting e.g. Amazon CloudFormation. For this lab we will use a Amazon CloudFormation template to create the required components.
 
-Here is the Amazon CloudFormation template that you can use to spin up the requeired components for DMS, <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvent-2018-serverless-datalake-dms&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverlessdatalake2018-dms.yml" target="_blank">Create DMS stack</a>
+Here is the Amazon CloudFormation template that you can use to spin up the required components for DMS, <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvent-2018-serverless-datalake-dms&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverlessdatalake2018-dms.yml" target="_blank">Create DMS stack</a>
 
 Enter the stack name, choose the replication instance type, enter security group name, S3 bucket name (s3://^ingestionbucket^/raw/userprofile) and role arn to create the stack.
 
@@ -1086,7 +1086,7 @@ From DMS console select **Tasks** menu and select the task created via CloudForm
 After the task is in *Load complete* status, open the DynamoDB console and verify that a new table `userprofile` was created with ~50000 user profile records.
 
 #### Conclusion
-As part of the above exerise we saw how to create a data load pipeline using DMS. You can extend the CloudFormation template to load multiple tables or change the target and source endpoints by simply swapping out the resources in the template.
+As part of the above exercise we saw how to create a data load pipeline using DMS. You can extend the CloudFormation template to load multiple tables or change the target and source endpoints by simply swapping out the resources in the template.
 
 
 
