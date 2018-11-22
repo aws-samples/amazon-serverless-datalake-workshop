@@ -430,7 +430,7 @@ You will work with `useractivity` and `userprofile` datasets, the table definiti
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from **Data store** drop down
 	 - Choose **Parquet** from **Format** drop down
-	 - From **Target path** choose `^ingestionbucket^/weblogs/joindatasets` S3 bucket and click **Next** button
+	 - From **Target path** enter `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket path and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
@@ -768,7 +768,7 @@ In order to protect sensitive data, we will want to eliminate columns or hash se
    - Under **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from **Data store** drop down
 	 - Choose **Parquet** from **Format** drop down
-	 - From **Target path** choose `^ingestionbucket^/weblogs/userprofile-secure` S3 bucket and click **Next** button
+	 - From **Target path** enter `s3://^ingestionbucket^/weblogs/userprofile-secure` S3 bucket path and click **Next** button
    - Under **Schema** step, keep default and click **Next** button
    - Under **Review** step, review the selections and click **Save job and edit script** button
 4. Under **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code coverts the source data to parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
