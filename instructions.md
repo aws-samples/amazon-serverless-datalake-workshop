@@ -298,7 +298,7 @@ job.commit()
 	
 # Serverless Analysis of data in Amazon S3 using Amazon Athena
 
-> If you are using Amazon Athena for the first time then follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab.
+> If you are using Amazon Athena for the first time then follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab. Refer section Attach Managed Policies for Using Athena
 
 > In this workshop we will leverage the AWS Glue Data Catalog `weblogs` for serverless analysis in Amazon Athena. If you are new to Athena then you can leverage AWS Glue Data Catalog but if you had previously created databases and tables using Athena or Amazon Redshift Spectrum but not upgraded Athena to use AWS Glue Data Catalog then please follow the steps in [Upgrading to the AWS Glue Data Catalog Step-by-Step](https://docs.aws.amazon.com/athena/latest/ug/glue-upgrade.html) documentation before proceeding further.
 
