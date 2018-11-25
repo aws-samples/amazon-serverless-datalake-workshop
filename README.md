@@ -8,7 +8,7 @@ You are playing the role of the data lake architect and your primary customers a
 
 ### Current Challenges
 
-The current data warehouse is very rigid in its star schema architecture. It is very difficult to get new data into the warehouse and have it linked up to other data sources. The result is a set of data marts that are isolated from one another. Another challenge is that there is a lot of semi-structured data sources that the current data warehouse team cannot process. For example, data is pulled from the weblog JSON files into a relational database, but only a subset of the data fits into the existing schema and the rest is lost. If the requirements change, it is very difficult and time-consuming to change the schema, and the historical data is lost since the source files are not kept.
+The current data warehouse is very rigid in its star schema architecture. It is very difficult to get new data into the warehouse and have it linked up to other data sources. The result is a set of data marts that are isolated from one another. Another challenge is that there are a lot of semi-structured data sources that the current data warehouse team cannot process. For example, data is pulled from the weblog JSON files into a relational database, but only a subset of the data fits into the existing schema and the rest is lost. If the requirements change, it is very difficult and time-consuming to change the schema, and the historical data is lost since the source files are not kept.
 
 ### The Cloud Engineering Team
 
@@ -30,14 +30,14 @@ By storing the data on Amazon S3, you have a cost-effective service that can sto
 
 ## Why Serverless
 * Simple to manage
-* No Cost for Idle
+* No cost for idle
 * Agile
 
 # Setup
 
 > ***For this lab, ensure the current AWS region is US East (N. Virginia).***
 
-Here is the Amazon CloudFormation script that the cloud engineering team made available. <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvent-2018-serverless-datalake&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverless-data-lake.yaml" target="_blank">Create a stack</a> This template will provide a headstart in configuring the data lake.
+Here is the Amazon CloudFormation script that the cloud engineering team made available. <a href="https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=reinvent-2018-serverless-datalake&templateURL=https://s3.amazonaws.com/arc326-instructions/script/serverless-data-lake.yaml" target="_blank">Create a stack</a> This template will provide a head start in configuring the data lake.
 
 [Annotated CloudFormation Template ](serverlessdatalake2018.html)
 
@@ -59,12 +59,12 @@ Here is the Amazon CloudFormation script that the cloud engineering team made av
 <p>
 
 # Storage
-The separation of data and compute is a foundation architectural concept in modern data lakes. By using S3 as the storage tier, you can have transient data warehouse or hadoop clusters that scale up to the compute capacity when you need them.
+The separation of data and compute is a foundation architectural concept in modern data lakes. By using S3 as the storage tier, you can have transient data warehouse or Hadoop clusters that scale up to the compute capacity when you need them.
 
 ## Simple Storage Service (S3)
-Amazon S3 is object storage built to store and retrieve any amount of data from anywhere – websites and mobile apps, corporate applications, and data from IoT sensors or devices. It is designed to deliver 99.999999999% durability, and stores data for millions of applications used by market leaders in every industry.
+Amazon S3 is object storage built to store and retrieve any amount of data from anywhere – websites and mobile apps, corporate applications, and data from IoT sensors or devices. It is designed to deliver 99.999999999% durability and stores data for millions of applications used by market leaders in every industry.
 
-S3 is the cornerstone of a data lake, it provides the storage tier for data at rest. Data in S3 can be queried in place using Athena or Redshift Spectrum, mounted to Hadoop with EMR, and loaded into Redshift.
+S3 is the cornerstone of a data lake; it provides the storage tier for data at rest. Data in S3 can be queried in place using Athena or Redshift Spectrum, mounted to Hadoop with EMR, and loaded into Redshift.
 
 ## Amazon Redshift
 Amazon Redshift is a fast, scalable data warehouse that makes it simple and cost-effective to analyze all your data across your data warehouse and data lake. Redshift delivers ten times faster performance than other data warehouses by using machine learning, massively parallel query execution, and columnar storage on high-performance disk.
@@ -80,7 +80,7 @@ Amazon Kinesis Data Firehose is the easiest way to load streaming data into data
 Relational database systems form the backbone of most enterprise data systems. The data lake will receive data from the relational databases on a periodic basis, either through a data stream such as Kinesis Firehouse, 3rd-party tools like Sqoop, or through change data capture (CDC) using Amazon Database Migration Service (DMS). These data changes will be pushed into the ingestion buckets in the data lake for later processing. In this lab, we will copy data into S3 to simulate the ingestion of data from a CDC service like DMS. 
 
 ## Third Party Data
-Frequently data that comes from outside the organization will be valuable to integrate into the data lake. In this example, demographic data from the US Census bureau curated by a third party will be included in the data for analysis. The data will be staged into S3 during startup by the CloudFormation script, but this data can be sourced through a variety of channels.
+Frequently, data that comes from outside the organization will be valuable to integrate into the data lake. In this example, demographic data from the US Census bureau curated by a third party will be included in the data for analysis. The data will be staged into S3 during startup by the CloudFormation script, but this data can be sourced through a variety of channels.
 
 # Data Catalog
 ## Glue Data Catalog
