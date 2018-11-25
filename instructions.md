@@ -18,6 +18,9 @@ We will verify that the log files are moving from the cloudwatch logs to the S3 
 
 **It may take a few minutes for data to show up in Kinesis**
 
+>**Note:** If you are using Amazon Kinesis for the firt time then you will see the gettting started page. Click on **Get started** button to continue
+
+
 1. Under Services, Type 'Kinesis'.
 1. Under 'Kinesis Firehose Delivery Streams', select ^stackname^-ApacheLogsKinesis-*random id*.
 1. Click the monitoring tab.
@@ -700,9 +703,9 @@ Now that you have configured the data source and created the custom sql, in this
 6. To add filter to `age`,
     - Select the dropdown for the `age` field from the **Fields list**. 
     - Select **Add filter for this field** from the dropdown menu.
-    - From **Applied Filters**, click **Include - all** to open the current filters
+    - From **Applied Fiters**, click **Include - all** to open the current filters. If you get alert message "We can't deterimine how many unique values are in this column....", click **Retrieve** to continue.
     - From the age list select `25` and click **Apply** and then **Close**
-7. To filter the data only for the age 25
+7. This will filter the data only for the age 25 group
 
 #### Visualize the monthly data for all web page request
 
