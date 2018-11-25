@@ -900,13 +900,11 @@ The workshop provided the code needed to make the Glue jobs function properly. B
   * Pre-windows 10: 
     * Install PuTTY: <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html" target="_blank">More Info</a>
     * You will need to convert the pem file to a ppk file using the puttygen utility.
+1. Create an AWS Glue development endpoint. Refer to the instuctions <a href="https://docs.aws.amazon.com/glue/latest/dg/console-development-endpoint.html" target="_black">here</a>.
 
 ### Lab Activities
-The cloud engineering team has created a development endpoint for you to build and develop your glue ETL scripts. A development endpoint is a glue service that allows you to run and test AWS Glue code without having to wait for servers to spin up and execute your job. This greatly reduces the frustration of debugging code having to wait for resources to become available.
 
-The glue endpoint details are in the Output section of the CloudFormation stack.
-
-Go to the Glue Console and Select the Glue Development Endpoint created by the Cloud Engineering team.
+Go to the Glue Console and Select the Glue Development Endpoint created in the prerequisites section above.
 1. Select Action->Create Zeppelin Notebook Server
 1. Go through the Zeppelin Notebook Wizard
 1. CloudFormation stack name: aws-glue-^stackname^
