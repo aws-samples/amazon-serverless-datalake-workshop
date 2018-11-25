@@ -298,7 +298,7 @@ job.commit()
 	
 # Serverless Analysis of data in Amazon S3 using Amazon Athena
 
-> If you are using Amazon Athena for the first time, follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab.
+> If you are using Amazon Athena for the first time, follow the <a href="https://docs.aws.amazon.com/athena/latest/ug/setting-up.html" target="_blank">Setting Up Amazon Athena</a> to make sure you have the correct permissions to execute the lab. Refer section Attach Managed Policies for Using Athena.
 
 > In this workshop we will leverage the AWS Glue Data Catalog `weblogs` for serverless analysis in Amazon Athena. If you are new to Athena you can leverage AWS Glue Data Catalog, but if you had previously created databases and tables using Athena or Amazon Redshift Spectrum but not upgraded Athena to use AWS Glue Data Catalog, then please follow the steps in [Upgrading to the AWS Glue Data Catalog Step-by-Step](https://docs.aws.amazon.com/athena/latest/ug/glue-upgrade.html) documentation before proceeding further.
 
@@ -773,6 +773,7 @@ In order to protect sensitive data, we will want to eliminate columns or hash se
    - Under the **Review** step, review the selections and click **Save job and edit script** button
 4. Under the **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code converts the source data to Parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
    - Select all the code under **Edit Script** and replace it with the code below and click the **Save** button to save the changes
+
 
 > Replace the S3 bucket path in the script below with your S3 bucket path
 
