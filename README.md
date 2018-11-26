@@ -43,7 +43,7 @@ Here is the Amazon CloudFormation script that the cloud engineering team made av
 
 ## High Level Serverless Data Lake Architecture
 
-![data lake architecture](/images/datalakearc.png)
+![data lake architecture](https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/master/images/datalakearc.png)
 
 ## Serverless Data Lake Components
 * S3
