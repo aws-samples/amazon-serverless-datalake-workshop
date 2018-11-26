@@ -265,7 +265,7 @@ dataframe0 = dataframe0.withColumn('month', month(from_unixtime(unix_timestamp('
 ## @ convert dataframe to glue DynamicFrame and write the output in Parquet format partitioned on toppage column
 useractivity = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
 
-writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/useractivityconverted', "partitionKeys" :["toppage"]}, format = "Parquet", transformation_ctx = "writeUseractivityToS3")
+writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/useractivityconverted', "partitionKeys" :["toppage"]}, format = "parquet", transformation_ctx = "writeUseractivityToS3")
 
 job.commit()
 ```
@@ -433,13 +433,11 @@ You will work with `useractivity` and `userprofile` datasets, the table definiti
    - Under the **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from the **Data store** drop down
 	 - Choose **Parquet** from the **Format** drop down
-	 - From **Target path** choose `^ingestionbucket^/weblogs/joindatasets` S3 bucket and click **Next** button
+	 - From **Target path** choose `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket and click **Next** button
    - Under the **Schema** step, keep default and click **Next** button
    - Under the **Review** step, review the selections and click **Save job and edit script** button
 4. Under the **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code converts the source data to Parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
    - Select all the code under **Edit Script**, replace it with the code below and click **Save** button to save the changes
-
-> Replace the S3 bucket path in the script below with your S3 bucket path
 
 ```python
 ## @ Import the AWS Glue libraries, pySpark we'll need 
@@ -499,7 +497,7 @@ joined = Join.apply(userprofile, useractivity, 'dy_username', 'username').drop_f
 glueContext.write_dynamic_frame.from_options(frame = joined,
           connection_type = "s3",
           connection_options = {"path": 's3://^ingestionbucket^/weblogs/joindatasets'},
-          format = "Parquet")
+          format = "parquet")
 
 job.commit()
 
@@ -822,7 +820,7 @@ dataframe0 = dataframe0.drop('cc').drop('ssn').drop('password')
 datasource1 = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
 
 
-datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/userprofile-secure'}, format = "Parquet", transformation_ctx = "datasink4")
+datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/userprofile-secure'}, format = "parquet", transformation_ctx = "datasink4")
 
 job.commit()
 ```
@@ -862,7 +860,7 @@ The simplest way to convert a table into a more efficient format is to use the A
 ```SQL
 CREATE TABLE IF NOT EXISTS userprofileParquet
   WITH (format='PARQUET', 
-  		Parquet_compression='SNAPPY', 
+  		parquet_compression='SNAPPY', 
   		partitioned_by=ARRAY['age'], 
   		external_location='s3://^ingestionbucket^/weblogs/ctas-sample') AS
 	SELECT first_name, 
