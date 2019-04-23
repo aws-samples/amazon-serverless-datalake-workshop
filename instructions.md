@@ -769,7 +769,7 @@ In order to protect sensitive data, we will want to eliminate columns or hash se
    - Under the **Data target** step, choose **Create tables in your data target** option 
 	 - Choose **Amazon S3** from the **Data store** drop down
 	 - Choose **Parquet** from the **Format** drop down
-	 - From **Target path** choose the `^ingestionbucket^/weblogs/userprofile-secure` S3 bucket and click **Next** button
+	 - From **Target path** choose the `s3://^ingestionbucket^/weblogs/userprofile-secure` S3 bucket and click **Next** button
    - Under the **Schema** step, keep default and click **Next** button
    - Under the **Review** step, review the selections and click **Save job and edit script** button
 4. Under the **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code converts the source data to Parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
