@@ -114,6 +114,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
   TransformKinesis:
     Type: 'AWS::Lambda::Function'
     Properties:
@@ -219,6 +220,144 @@ Resources:
             Resource: '*'
       Roles:
         - !Ref 'RedshiftServiceRole'
+  WriteLogsFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.lambda_handler
+      Runtime: python2.7
+      Description: ''
+      MemorySize: 512
+      Timeout: 55
+      Role: !GetAtt TransformKinesisFunctionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref IngestionBucket
+          LOG_GROUP_NAME: !Sub /${AWS::StackName}/apache
+      Code: 
+        ZipFile: !Sub |
+          import boto3
+          import random
+          import string
+          import uuid
+          import json
+          import os
+          import datetime
+          import calendar
+          import time
+          import urllib2
+
+          profiles = json.loads(urllib2.urlopen("https://s3.${AWS::Region}.amazonaws.com/${IngestionBucket}/data-gen/profiles.json").read())
+
+          requestUrls = ["GET /petstore/Fish/Feeders",
+                         "GET /petstore/Cats/DryFood",
+                         "GET /petstore/Bird/Etc",
+                         "GET /petstore/Dogs/DryFood",
+                         "GET /petstore/Dogs/CannedFood",
+                         "GET /petstore/Fish/PlantCare",
+                         "GET /petstore/Fish/Food",
+                         "GET /petstore/Cats/WetFood",
+                         "GET /petstore/Bird/Treats",
+                         "GET /petstore/Bird/Food",
+                         "GET /petstore/Dogs/FoodToppers",
+                         "GET /petstore/Cats/Treats"]
+
+          client = boto3.client('logs')
+
+          def lambda_handler(event, context):
+            timestamp = datetime.datetime.now()
+
+            nextSeqTokem = ""
+            logGroupName = os.environ['LOG_GROUP_NAME']
+            logStreamName = timestamp.strftime('%d-%b-%Y-%H-%M-%S') 
+
+            response = client.create_log_stream(
+                logGroupName=logGroupName,
+                logStreamName=logStreamName
+            )
+
+            waittime = 100 #write log every 100 ms
+
+            while context.get_remaining_time_in_millis() > (waittime+1000):
+              time.sleep(float(waittime)/1000.0)
+              profile = profiles[random.randint(0,len(profiles)-1)]
+              requestUrl = requestUrls[random.randint(0,len(requestUrls)-1)]
+              timestamp = datetime.datetime.now()
+              milliseconds = timestamp.microsecond / 1000
+              ts = calendar.timegm(timestamp.timetuple())*1000 + milliseconds
+              logentry = profile["ip"] + "," + profile["username"] + "," + timestamp.strftime('%d/%b/%Y:%H:%M:%S') + ",\"" + requestUrl +"\",200," + str(random.randint(300,1000))
+
+
+              if nextSeqTokem == "" : 
+                response = client.put_log_events(
+                    logGroupName=logGroupName,
+                    logStreamName=logStreamName,
+                    logEvents=[
+                        {
+                            'timestamp': ts,
+                            'message': logentry
+                        }
+                    ]
+                )
+                nextSeqTokem = response["nextSequenceToken"]
+              else:
+                response = client.put_log_events(
+                    logGroupName=logGroupName,
+                    logStreamName=logStreamName,
+                    logEvents=[
+                        {
+                            'timestamp': ts,
+                            'message': logentry
+                        }
+                    ],
+                    sequenceToken=nextSeqTokem
+                )
+
+                nextSeqTokem = response["nextSequenceToken"]
+              
+              waittime = random.randint(1,100)
+            
+            return context.get_remaining_time_in_millis()
+  SchedulerPolicyLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt WriteLogsFunction.Arn
+      Principal: events.amazonaws.com
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+  SchedulerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AWS::StackName}_scheduler_policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 
+                - 'lambda:InvokeFunction'
+                - 'lambda:InvokeAsync'
+            Resource:
+              - !Sub '${WriteLogsFunction.Arn}'
+      Roles:
+        - !Ref 'SchedulerRole'
+  EventScheduler:
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: Triggers the data generation
+      RoleArn: !GetAtt SchedulerRole.Arn
+      ScheduleExpression: rate(1 minute)
+      Targets : 
+        - Id: !Sub ${AWS::StackName}-SchedulerRole
+          Arn: !GetAtt WriteLogsFunction.Arn
+
   LoadSampleDataFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
@@ -232,6 +371,7 @@ Resources:
         Variables:
           BUCKET_NAME: !Ref IngestionBucket
           SOURCE_BUCKET_NAME: arc326-instructions
+          GLUE_SVC_ROLE: !Ref GlueDevServiceRole
       Code: 
         ZipFile: !Sub |
           import boto3
@@ -248,32 +388,34 @@ Resources:
 
 
           s3_client = boto3.client('s3')
+          glue_client = boto3.client('glue')
           s3 = boto3.resource('s3')
+          srcB = 'arc326-instructions'
 
           def lambda_handler(event, context):
               try:
+                  print("Received event: " + json.dumps(event, indent=2))    
                   return process_cfn(event, context)
               except Exception as e:
                   print("EXCEPTION", e)
-                  print(e)
-                  responseData = {}
-                  responseData['Data'] = "Create Failed"
+                  rData = {}
+                  rData['Data'] = "Create Failed"
                   cfnresponse.send(event, {
                       'StackId': event['StackId'],
                       'RequestId': event['RequestId'],
                       'LogicalResourceId': event['LogicalResourceId']
-                      }, cfnresponse.FAILED, responseData)
+                      }, cfnresponse.FAILED, rData)
 
           def delete_files(event, content):
-              bucket = os.environ['BUCKET_NAME']
+              bkt = os.environ['BUCKET_NAME']
               marker = ''
               maxKeys = 100
 
-              isTruncated = True
-              s3_bucket = s3_client.list_objects_v2(Bucket=bucket, MaxKeys=maxKeys)
+              isTrunc = True
+              s3_bucket = s3_client.list_objects_v2(Bucket=bkt, MaxKeys=maxKeys)
 
-              while isTruncated:
-                  isTruncated = s3_bucket['IsTruncated']
+              while isTrunc:
+                  isTrunc = s3_bucket['IsTruncated']
                   
                   objects = []
 
@@ -282,25 +424,23 @@ Resources:
 
 
                   response = s3_client.delete_objects(
-                      Bucket=bucket,
+                      Bucket=bkt,
                       Delete={
                           'Objects': objects,
                           'Quiet': True
                       }
                   )
 
-                  if isTruncated:
+                  if isTrunc:
                       marker = s3_bucket['NextContinuationToken']
-                      s3_bucket = s3_client.list_objects_v2(Bucket=bucket, ContinuationToken=marker, MaxKeys=maxKeys)
+                      s3_bucket = s3_client.list_objects_v2(Bucket=bkt, ContinuationToken=marker, MaxKeys=maxKeys)
 
               return "Success"
 
 
 
           def process_cfn(event, context):
-              print("Received event: " + json.dumps(event, indent=2))
-              
-              bucket = os.environ['BUCKET_NAME']
+              bkt = os.environ['BUCKET_NAME']
 
               response = {
                   'StackId': event['StackId'],
@@ -311,53 +451,248 @@ Resources:
 
               if event['RequestType'] == 'Delete':
                   delete_files(event, context)
-                  responseData = {}
-                  responseData['Data'] = "Delete Succcessful"
-                  return cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+                  rData = {}
+                  rData['Data'] = "Delete Succcessful"
+                  return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
                    
               copy_files(event, context)
-              responseData = {}
-              responseData['Data'] = "Create Succcessful"
-              return cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+
+              glue_response = glue_client.get_dev_endpoint(EndpointName=event['ResourceProperties']['GlueDevEndpoint'])
+
+
+              rData = {}
+              rData['Data'] = "Create Succcessful"
+              rData['GlueYarnEndpointAddress'] = glue_response['DevEndpoint']['YarnEndpointAddress'].split('.', 3)[0]
+              rData['GluePrivateAddress'] = glue_response['DevEndpoint']['PrivateAddress'].split('.', 3)[0]
+              return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
           def copy_files(event, context):
-              print("Received event: " + json.dumps(event, indent=2))
-              
               stackName =  event['ResourceProperties']['StackName']
 
-              bucket = os.environ['BUCKET_NAME']
-              sourceBucket = os.environ['SOURCE_BUCKET_NAME']
+              bkt = os.environ['BUCKET_NAME']
+              gluerole = os.environ['GLUE_SVC_ROLE']
 
               response = s3_client.copy_object(
-                  Bucket=bucket,
-                  CopySource={'Bucket': 'arc326-instructions', 'Key': 'sample-data/useractivity.csv'},
+                  Bucket=bkt,
+                  CopySource={'Bucket': srcB, 'Key': 'sample-data/useractivity.csv'},
                   Key='raw/useractivity/useractivity.csv'
               )
 
-              print('useractivity copy complete')
-
               response = s3_client.copy_object(
-                  Bucket=bucket,
-                  CopySource={'Bucket': 'arc326-instructions', 'Key': 'sample-data/zipcodedata.csv'},
+                  Bucket=bkt,
+                  CopySource={'Bucket': srcB, 'Key': 'sample-data/zipcodedata.csv'},
                   Key='raw/zipcodes/zipcodedata.csv'
               )
-
               response = s3_client.copy_object(
-                  Bucket=bucket,
-                  CopySource={'Bucket': 'arc326-instructions', 'Key': 'sample-data/userprofile.csv'},
+                  Bucket=bkt,
+                  ACL='public-read',
+                  CopySource={'Bucket': srcB, 'Key': 'data-gen/profiles.json'},
+                  Key='data-gen/profiles.json'
+              )
+              response = s3_client.copy_object(
+                  Bucket=bkt,
+                  CopySource={'Bucket': srcB, 'Key': 'sample-data/userprofile.csv'},
                   Key='raw/userprofile/userprofile.csv'
               )
+              replaceText(bkt, stackName, gluerole, 'instructions/instructions-template.html', 'instructions/instructions.html')
+              replaceText(bkt, stackName, gluerole, 'instructions/labs-template.ipynb', 'instructions/labs.ipynb')
 
-              src = s3.Object(sourceBucket, 'instructions/instructions-template.html')
+          def replaceText(bkt, stackName, gluerole, src, dst):
+              src = s3.Object(srcB, src)
               html = src.get()['Body'].read().decode('utf-8') 
-
-              html = html.replace('^ingestionbucket^', bucket)
-              html = html.replace('^stackname^', stackName)
-
-              destination = s3.Object(bucket, 'instructions/instructions.html')
+              html = html.replace('^ingestionbucket^', bkt).replace('^stackname^', stackName).replace('^gluerole^', gluerole)
+              destination = s3.Object(bkt, dst)
               result = destination.put(Body=html, ACL='public-read', ContentDisposition='inline', ContentType='text/html')
-
-
               return "Success"
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Sub DataLakeVpc-${AWS::StackName}
+  PublicDataLakeVpcSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'VPC'
+      CidrBlock: 10.1.0.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: 
+        Fn::Select: 
+          - 0
+          - Fn::GetAZs: ""
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Sub Public-DataLakeVpc-${AWS::StackName}
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'VPC'
+      InternetGatewayId: !Ref 'InternetGateway'
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'VPC'
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Sub Public-DataLakeVpc-${AWS::StackName}
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'RouteTable'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicDataLakeVpcSubnet'
+      RouteTableId: !Ref 'RouteTable'
+  NetworkAcl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref 'VPC'
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+  InboundHTTPNetworkAclEntry:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref 'NetworkAcl'
+      RuleNumber: '100'
+      Protocol: '-1'
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: 0.0.0.0/0
+  OutboundHTTPNetworkAclEntry:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref 'NetworkAcl'
+      RuleNumber: '100'
+      Protocol: '-1'
+      RuleAction: allow
+      Egress: 'true'
+      CidrBlock: 0.0.0.0/0
+  PublicDataLakeVpcSubnetNetworkAclAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref 'PublicDataLakeVpcSubnet'
+      NetworkAclId: !Ref 'NetworkAcl'
+  GlueSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: GlueSecurityGroup
+    Properties:
+      GroupId: !Ref GlueSecurityGroup
+      IpProtocol: -1
+      FromPort: -1
+      ToPort: -1
+      SourceSecurityGroupId: !Ref GlueSecurityGroup
+  GlueSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Sub DataLakeSecurityGroup-${AWS::StackName}
+  GlueDevServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole            
+  GlueDevRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AWS::StackName}_glue_endpoint_policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:*'
+              - 'DescribeSubnets:*'
+              - 'logs:*'
+            Resource:
+              - '*'
+      Roles:
+        - !Ref 'GlueDevServiceRole'
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - '*'
+            Resource:
+              - '*'
+      RouteTableIds:
+        - !Ref RouteTable
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref VPC
+  GlueDevEndpoint:
+    Type: AWS::Glue::DevEndpoint
+    Properties:
+      EndpointName: !Sub datalake-${AWS::StackName}
+      PublicKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyQ19lVS4Td9LT66vTlIBxD4youu1fZJKnJP+k0aBMKZ3W2GPpq31VmPQEqJbfYPWPRRRagSiWlzvk/3Y3DSCnAhmU/XGla+JTkITTA6fmn1o9ymwyg0mrmdMHZK16yd9f++dfzJ5fdspd53N4a0KGJooST4YOXk4RanakelL3tjePqHFpg0uShgqeOaP9aaU9LpE39Q77TFWFfqfjve5HH33NEmBMphmnvHsOWcx7eydCPIN17xnClJDCf8GvELVB6ef2qGWipP7YaM0UTjlaiBV7Q5ciCfFnAf1FMykzYUnHK9tE5aTOI8XOst0syPEbhegPSxOhrDf5Y08gC7ut gillemi@9801a79dae39'
+      RoleArn: !GetAtt GlueDevServiceRole.Arn
+      SecurityGroupIds:
+        - !Ref GlueSecurityGroup
+      SubnetId: !Ref PublicDataLakeVpcSubnet
+
+  NotebookProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Roles:
+        - !Ref GlueDevServiceRole 
+
   LoadSampleData:
     Type: Custom::LoadSampleData
     DependsOn:
@@ -365,6 +700,7 @@ Resources:
     Properties: 
       ServiceToken: !GetAtt LoadSampleDataFunction.Arn
       StackName: !Ref AWS::StackName
+      GlueDevEndpoint: !Ref GlueDevEndpoint
 
 Outputs:
   RedshiftRole:

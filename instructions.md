@@ -82,22 +82,6 @@ These datasets are downloaded into the S3 bucket at:
  s3://^ingestionbucket^/raw/zipcodes
 ```
 
-## Create an IAM Role
-Create an IAM role that has permission to your Amazon S3 sources, targets, temporary directory, scripts, AWSGlueServiceRole and any libraries used by the job. Refer to <a href="https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html" href="_blank">AWS Glue documentation</a> on how to create the role or follow the steps below
-
-
-1. Click <a href="https://console.aws.amazon.com/iam/" target="_blank">here</a> to open IAM console.
-2. In the left navigation pane, choose **Roles**.
-3. Choose **Create role**.
-4. For role type, choose **AWS Service**, find and choose **Glue**, and choose **Next: Permissions**.
-5. On the **Attach permissions policy** page, choose the policies that contain the required permissions; choose the AWS managed policy **AWSGlueServiceRole** for general AWS Glue permissions and the AWS managed policy **AmazonS3FullAccess** for access to Amazon S3 resources.
-6. On **Add tags (optional)** page, enter `Name` as **Key** and `reInvent2018-serverless-data-lake` as **Value**.
-6. Choose **Next: Review**.
-7. For Role name, type a name for your role; for example, **AWSGlueServiceRoleDefault**. 
-8. Choose **Create Role**.
-
-> In the Lab guide **AWSGlueServiceRoleDefault** role name is used. If you create the IAM role with a different name, then please substitute your role name for **AWSGlueServiceRoleDefault**.
-
 ## Discover Data
 
 For this lab we will focus on weblogs data which is captured in `useractivity.csv` file. The data is in CSV format like below:
@@ -155,7 +139,7 @@ AWS Glue crawler will create the following tables in the `weblogs` database:
 5. On the **Data Store** step, choose S3 from **Choose a data store** drop down. Enter `s3://^ingestionbucket^/raw` as S3 bucket location for **Include path**.
 5. Expand the **Exclude patterns (optional)** section and enter `zipcodes/**` in **Exclude patterns** text box (We will exclude the zipcodes file in this exercise and pick it up later in the lab). Click the **Next** button
 6. Choose **No** and click **Next** on **Add another data store**
-7. On the **IAM Role** step, choose the **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
+7. On the **IAM Role** step, choose the **Choose an existing IAM role** option and select `^gluerole^` from **IAM role** drop down. click **Next**
 8. On the **Schedule** step keep the default **Run on demand** option and click **Next**
 9. On the **Output** step, choose the `weblogs` database from the **Database** drop down. Keep defaults the same and click **Next** button
 10. On the **Review all steps** step, review the selections and click **Finish**. This should take you back to the **Crawlers** dashboard
@@ -181,102 +165,30 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
 
 
 #### Steps to create glue job
- As part of this step you will create a glue job, update the default script and run the job. We will be using the AWS Management Console to write and edit the glue scripts but you also have an option of creating a `DevEndpoint` and running your code there. To create the `DevEndpoint` you can either refer to the **Configure Zeppelin Notebook Server** section of this lab guide or refer to <a href="https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint.html" target="_blank">AWS Glue documentation</a>.
-
- > If you are using Zeppelin Notebook then jump to step 4, create a new note `useractivityjob` and copy paste the code from step 4. Confirm spark as the **Default Interpreter**.
+ As part of this step you will create a glue job, update the default script and run the job. We will be using the AWS Management Console to create a SageMaker Jupyter notebook which will run the scripts on an AWS Glue Development Endpoint. Development endpoints provide the compute needed to run the Spark Job without having to wait until a cluster gets created to execute the code. This will reduce the feedback loops in the development and testing effort.
 
 1. From the AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home?region=us-east-1" target="_blank">AWS Management console for Amazon Glue</a>.
-1. From the AWS Glue dashboard left hand menu select **Jobs** menu
-2. From the **Jobs** menu page, click **Add job** button
-3. Follow the instructions in the **Add job** wizard
-   - Under the  **Job properties** step, Enter `useractivityjob` in the **Name** text box
-   - Under the **IAM role** drop down select `AWSGlueServiceRoleDefault`
-   - Keep the rest of the defaults the same and click **Next** button
-   - Under the **Data source** step, choose `useractivity` data catalog table and click **Next**  button
-   - Under the **Data target** step, choose **Create tables in your data target** option 
-	 - Choose the `Amazon S3` from **Data store** drop down
-	 - Choose the `Parquet` from **Format** drop down
-	 - From the **Target path** enter `s3://^ingestionbucket^/weblogs/useractivityconverted` as S3 bucket and click **Next** button
-   - Under the **Schema** step, keep default and click **Next** button
-   - Under the **Review** step, review the selections and click **Save job and edit script** button
-4. Under the **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The system-created code converts the source data to Parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
-   - Select all the code under **Edit Script** page and replace it with the code below
-
-``` python
-## @ Import the AWS Glue libraries, pySpark we'll need 
-import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
-from pyspark.sql.functions import *
-from awsglue.dynamicframe import DynamicFrame
-
-## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
-
-## @ set up a single GlueContext.
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
-
-## @ create the Glue DynamicFrame from table schema. A DynamicFrame is similar to a DataFrame, except that each record is 
-## @ self-describing, so no schema is required initially.
-useractivity = glueContext.create_dynamic_frame.from_catalog(database = "weblogs", table_name = "useractivity", transformation_ctx = "useractivity")
-
-## @ ApplyMapping is one of the built in transforms that maps source columns and data types from a DynamicFrame to target columns 
-## @ and data types in a returned DynamicFrame. You specify the mapping argument, which is a list of tuples that contain source column,
-## @ source type, target column, and target type.
-useractivityApplyMapping = ApplyMapping.apply(frame = useractivity, mappings = [("ip_address", "string", "ip_address", "string"), ("username", "string", "username", "string"), ("timestamp", "string", "timestamp", "string"), ("request", "string", "request", "string"), ("http", "long", "http", "long"), ("bytes", "long", "bytes", "long")], transformation_ctx = "applymapping1")
-
-## @ ResolveChoice is another built in transform that you can use to specify how a column should be handled when it contains values of 
-## @ multiple types. You can choose to either cast the column to a single data type, discard one or more of the types, or retain all 
-## @ types in either separate columns or a structure. You can select a different resolution policy for each column or specify a global 
-## @ policy that is applied to all columns.
-resolvechoice2 = ResolveChoice.apply(frame = useractivityApplyMapping, choice = "make_struct", transformation_ctx = "resolvechoice2")
-
-## @ DropNullFields transform removes null fields from a DynamicFrame. The output DynamicFrame does not contain fields of the null type
-## @ in the schema.
-useractivity = DropNullFields.apply(frame = resolvechoice2, transformation_ctx = "dropnullfields3")
-
-## @ We will leverage PySpark functions to manipulate our data, starting with converting glue DynamicFrame to DataFrame
-dataframe0 = DynamicFrame.toDF(useractivity)
-
-## @ Use PySpark functions to split request columns on '/' 
-split_column = split(dataframe0['request'], '/')
-
-dataframe0 = dataframe0.withColumn('requesttype', split_column.getItem(0))
-
-dataframe0 = dataframe0.withColumn('topdomain', split_column.getItem(1))
-dataframe0 = dataframe0.withColumn('toppage', split_column.getItem(2))
-dataframe0 = dataframe0.withColumn('subpage', split_column.getItem(3))
-
-## @ split timestamp column into date, time, year and month
-dataframe0 = dataframe0.withColumn('date',date_format(from_unixtime(unix_timestamp('timestamp', 'd/MMM/yyyy:HH:mm:ss')), 'MM/dd/yyy'))
-dataframe0 = dataframe0.withColumn('time',date_format(from_unixtime(unix_timestamp('timestamp', 'd/MMM/yyyy:HH:mm:ss')), 'HH:mm:ss'))
-
-dataframe0 = dataframe0.withColumn('year', year(from_unixtime(unix_timestamp('timestamp', 'd/MMM/yyyy:HH:mm:ss'))))
-dataframe0 = dataframe0.withColumn('month', month(from_unixtime(unix_timestamp('timestamp', 'd/MMM/yyyy:HH:mm:ss'))))
-
-
-## @ convert dataframe to glue DynamicFrame and write the output in Parquet format partitioned on toppage column
-useractivity = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
-
-writeUseractivityToS3 = glueContext.write_dynamic_frame.from_options(frame = useractivity, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/useractivityconverted', "partitionKeys" :["toppage"]}, format = "parquet", transformation_ctx = "writeUseractivityToS3")
-
-job.commit()
+1. From the AWS Glue dashboard left hand menu select checkbox **Dev endpoints** menu item
+2. From the **Dev endpoints** menu page, selct the checbox by the '^stackname^' endpoint. click **Action** button and **Create SageMaker Notebook**.
+3. Follow the instructions in the **Create Notebook** screen.
+   - Under the  **Notebook Name** step, Enter aws-glue-`^stackname^`
+   - Under the **Attack to development endpoint** drop down select datalake-^stackname^ 
+   - Select 'Choose an existing IAM Role' radio button.
+   - For the IAM Role, select `^gluerole^`
+   - For VPC (option), select `DataLakeVpc-^stackname^`
+   - For the Subnet, select `Public-DataLakeVpc-^stackname^`
+   - Select the security group that starts with '^stackname^-GlueSecurityGroup'
+   - Use the defaults for KMS and click `Create Notebook`
+   - Wait until the Notebook is in the 'Ready' state.
+4. Select the Notebook `aws-glue-^stackname^`, and select 'Open Notebook'. Once the notebook opens, rename the notebook and select the `New` button and choose `Terminal`. Now copy the sample notebook from your bucket into the notebook. Enter the following command into the terminal window
 ```
+aws s3 cp s3://serverless-datalake-2-ingestionbucket-ilhbu82jobwo/instructions/labs.ipynb SageMaker/labs.ipynb
+```
+   - Click the Jupyter icon in the upper left to return the main menu.
+   - Now you should see **labs.ipynb** in the list. Click it to open and follow the instructions.
+   - Click **Run** button to run the code
 
-   - Click **Save** button to save the changes
 
-5. Select **Run job** button to execute the glue job, 
-6. On **Parameters (optional)** dialog, keep the default and click **Run job** button. You can see the job log in the lower half of the screen or on the Glue Job dashboard.
-7. Select **X** from the top-right corner to close the **Edit Script** page. This will take you back to the **Jobs** dashboard
-8. From jobs table select the job `useractivityjob` to open the detail tabs for the job.
-9. Under the **History** tab, monitor the **Run status**. The **Run Status** column should go from *Running* to *Stopping* to *Succeeded*
 10. Once the job is succeeded, go to S3 console and browse to `s3://^ingestionbucket^/weblogs/useractivityconverted` S3 bucket
 11. Under the `useractivityconverted` S3 folder you should see Parquet files created by the job, partitioned by `toppage` column.
 
@@ -288,7 +200,7 @@ job.commit()
 4. On the **Crawler Info** wizard step, enter crawler name `useractivityconvertedcrawler`, keep the default on the page and click **Next** button
 5. On the **Data Store** step, choose S3 from **Choose a data store** drop down. Enter `s3://^ingestionbucket^/weblogs/useractivityconverted` as S3 bucket location for **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
-7. On the **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. Click **Next**
+7. On the **IAM Role** step, choose **Choose an existing IAM role** option and select `^gluerole^` from **IAM role** drop down. Click **Next**
 8. On the **Schedule** step keep the default **Run on demand** option and click **Next**
 9. On the **Output** step, choose `weblogs` database from the **Database** drop down. Keep defaults the same and click **Next** button
 10. On the **Review all steps** step, review the selections and click **Finish**. This should take you back to the **Crawlers** dashboard
@@ -421,94 +333,16 @@ You will work with `useractivity` and `userprofile` datasets, the table definiti
 
 ### Create AWS Glue job 
 
- > If you are using Zeppelin Notebook then jump to step 4, create a new note `joindatasetsjob` and copy paste the code from step 4. Confirm spark as the **Default Interpreter**.
+ > Return to the SageMaker notebook.
 
-1. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home" target="_blank">AWS Management Console for AWS Glue</a>.
-2. From the **Jobs** menu page, click **Add job** button
-3. Follow the instructions in the **Add job** wizard
-   - Under the **Job properties** step, Enter `joindatasetsjob` in the **Name** text box
-   - Under the **IAM role** drop down select `AWSGlueServiceRoleDefault`
-   - Keep rest of the default the same and click **Next** button
-   - Under the **Data source** step, choose `useractivity` data catalog table and click **Next**  button
-   - Under the **Data target** step, choose **Create tables in your data target** option 
-	 - Choose **Amazon S3** from the **Data store** drop down
-	 - Choose **Parquet** from the **Format** drop down
-	 - From **Target path** choose `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket and click **Next** button
-   - Under the **Schema** step, keep default and click **Next** button
-   - Under the **Review** step, review the selections and click **Save job and edit script** button
-4. Under the **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code converts the source data to Parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
-   - Select all the code under **Edit Script**, replace it with the code below and click **Save** button to save the changes
+1. If you closed the jupyter notebook, follow the steps 1-3 to reopen the notebook. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home" target="_blank">AWS Management Console for AWS Glue</a>.
+2. From the **Notebook Servers** menu page, Select the `aws-glue-^stackname^` notebook and click **Open Notebook** button
+3. Open the labs workbook
+4. Find the section **Lab - Join and relationalize data with AWS Glue**
+5. Let's update the code to add our custom logic to flatten the columns.
 
-```python
-## @ Import the AWS Glue libraries, pySpark we'll need 
-import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
-from awsglue.dynamicframe import DynamicFrame
-
-## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
-
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
-
-## @ useractivity dynamicframe
-useractivity = glueContext.create_dynamic_frame.from_catalog(database = "weblogs", table_name = "useractivity", transformation_ctx = "useractivity")
-
-## @ applymappings to the dynamicframe to make sure we have the correct data types and column names
-applymapping1 = ApplyMapping.apply(frame = useractivity, mappings = [("ip_address", "string", "ip_address", "string"), ("username", "string", "username", "string"), ("timestamp", "string", "timestamp", "string"), ("request", "string", "request", "string"), ("http", "long", "http", "long"), ("bytes", "long", "bytes", "long")], transformation_ctx = "applymapping1")
-
-## @ resolve any issues with column data types
-resolvechoice2 = ResolveChoice.apply(frame = applymapping1, choice = "make_struct", transformation_ctx = "resolvechoice2")
-
-## @ drop any null fields
-useractivity = DropNullFields.apply(frame = resolvechoice2, transformation_ctx = "useractivity")
-
-## @ create userprofile dynamicframe
-userprofile = glueContext.create_dynamic_frame.from_catalog(database="weblogs", table_name="userprofile")
-
-## @ we will only keep the fields that we want and drop the rest and rename username to dy_username
-userprofile = userprofile.drop_fields(['cc', 'password', 'ssn', 'email', 'phone','ip_address'])
-userprofile = userprofile.rename_field('username','dy_username')
-
-## @ as the data types in different datasets are different we are going to convert all column to string
-## @ The Glue build in transform ApplyMapping, Maps source columns and data types from a DynamicFrame to target columns and data types 
-## @ in a returned DynamicFrame. You specify the mapping argument, which is a list of tuples that contain source column, source type, 
-## @ target column, and target type. In the below case we are converting the data types for zip and age to string and updating the column
-## @ names for first_name & last_name
-userprofile = ApplyMapping.apply(frame = userprofile, 
-mappings = [("first_name", "string", "firstname", "string"), 
-("dy_username", "string", "dy_username", "string"), 
-("zip", "bigint", "zip", "string"), 
-("age", "bigint", "age", "string"), 
-("gender", "string", "gender", "long"),
-("last_name", "string", "lastname", "long")
-], transformation_ctx = "userprofile")
-
-## @join useractivity and userprofile datasets to create one file and drop the duplicate column dy_username
-joined = Join.apply(userprofile, useractivity, 'dy_username', 'username').drop_fields(['dy_username'])
-
-glueContext.write_dynamic_frame.from_options(frame = joined,
-          connection_type = "s3",
-          connection_options = {"path": 's3://^ingestionbucket^/weblogs/joindatasets'},
-          format = "parquet")
-
-job.commit()
-
-```
-
-5. Select the **Save** button to save the glue job, 
-5. Select the **Run job** button to execute the glue job, 
+5. Select the **Run ** button to execute the glue job, 
 6. On the **Parameters (optional)** dialog, keep the default and click **Run job** button
-7. Select **X** from the right corner to close the **Edit Script** page. This will take you back to the **Jobs** dashboard
-8. From the jobs table select the job `joindatasetsjob` to open the detail tabs for the job.
-9. Under the **History** tab, monitor the *Run status*. The *Run Status* column should go from "Running" to "Stopping" to "Succeeded"
 10. Once the job is succeeded, go to S3 console and browse to `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket
 11. Under the `joindatasets` S3 folder you should see Parquet files created by the job
 
@@ -520,7 +354,7 @@ job.commit()
 4. On the **Crawler Info** wizard step, enter crawler name `joindatasetscrawler`, keep the default on the page and click **Next** button
 5. On the **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/weblogs/joindatasets` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
-7. On the **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
+7. On the **IAM Role** step, choose **Choose an existing IAM role** option and select `^gluerole^` from **IAM role** drop down. click **Next**
 8. On **Schedule** step keep the default **Run on demand** option and click **Next**
 9. On **Output** step, choose `weblogs` database from **Database** drop down. Keep default the same and click **Next** button
 10. On the **Review all steps** step, review the selections and click **Finish**. This should take you back to the **Crawlers** dashboard
@@ -759,71 +593,12 @@ In order to protect sensitive data, we will want to eliminate columns or hash se
 
 #### Create Glue Job
 
-1. From the AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open the AWS Glue console OR Open the [AWS Management Console for AWS Glue](https://console.aws.amazon.com/glue/home).
-2. From the **Jobs** menu page, click **Add job** button
-3. Follow the instructions in the **Add job** wizard
-   - Under the **Job properties** step, Enter `udfjob` in the **Name** text box
-   - Under the **IAM role** drop down select `AWSGlueServiceRoleDefault`
-   - Keep rest of the default the same and click **Next** button
-   - Under the **Data source** step, choose `userprofile` data catalog table and click **Next**  button
-   - Under the **Data target** step, choose **Create tables in your data target** option 
-	 - Choose **Amazon S3** from the **Data store** drop down
-	 - Choose **Parquet** from the **Format** drop down
-	 - From **Target path** choose the `s3://^ingestionbucket^/weblogs/userprofile-secure` S3 bucket and click **Next** button
-   - Under the **Schema** step, keep default and click **Next** button
-   - Under the **Review** step, review the selections and click **Save job and edit script** button
-4. Under the **Edit Script** step, based on the **Add Job** wizard selection, AWS Glue creates a PySpark script which you can edit to write your logic. The AWS Glue created code converts the source data to Parquet but does not flatten the request and timestamp. Let's update the code to add our custom logic to flatten the columns.
-   - Select all the code under **Edit Script** and replace it with the code below and click the **Save** button to save the changes
+1. If you closed the jupyter notebook, follow the steps 1-3 to reopen the notebook. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home" target="_blank">AWS Management Console for AWS Glue</a>.
+2. From the **Notebook Servers** menu page, Select the `aws-glue-^stackname^` notebook and click **Open Notebook** button
+3. Open the labs workbook
+4. Find the section **Create a UDF to simplify apply a hash function to columns**
+5. Run the section
 
-
-> Replace the S3 bucket path in the script below with your S3 bucket path
-
-
-``` python
-import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
-from pyspark.sql.functions import *
-from awsglue.dynamicframe import DynamicFrame
-from pyspark.sql.functions import udf
-from pyspark.sql.types import StringType
-import hashlib
-from dateutil.parser import parse
-
-def hash_cc(s):
-    return hashlib.sha256(s).hexdigest()
-
-## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
-
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
-
-datasource0 = glueContext.create_dynamic_frame.from_catalog(database = "weblogs", table_name = "userprofile", transformation_ctx = "datasource0")
-
-
-## @convert glue DynamicFrame to DataFrame to manipulate the columns
-dataframe0 = DynamicFrame.toDF(datasource0)
-
-hash_cc_f = udf(lambda x: hash_cc(x), StringType())
-
-dataframe0 = dataframe0.withColumn("hash_cc", hash_cc_f(dataframe0["cc"])).withColumn("hash_ssn", hash_cc_f(dataframe0["ssn"]))
-dataframe0 = dataframe0.drop('cc').drop('ssn').drop('password')
-
-## @convert dataframe to glue DynamicFrame and write the output in Parquet format
-datasource1 = DynamicFrame.fromDF(dataframe0, glueContext, "name1")
-
-
-datasink4 = glueContext.write_dynamic_frame.from_options(frame = datasource1, connection_type = "s3", connection_options = {"path": 's3://^ingestionbucket^/weblogs/userprofile-secure'}, format = "parquet", transformation_ctx = "datasink4")
-
-job.commit()
-```
 
 
 ### Create a glue crawler for the Secure Data
@@ -833,7 +608,7 @@ job.commit()
 4. On the **Crawler Info** wizard step, enter crawler name `userprofile-secure`, keep the default on the page and click **Next** button
 5. On the **Data Store** step, choose S3 from **Choose a data store** drop down. Choose `s3://^ingestionbucket^/weblogs/userprofile-secure` S3 bucket location from **Include path**. Keep other defaults the same and click **Next** button
 6. Choose **No** and click **Next** on **Add another data store** 
-7. On the **IAM Role** step, choose **Choose an existing IAM role** option and select `AWSGlueServiceRoleDefault` from **IAM role** drop down. click **Next**
+7. On the **IAM Role** step, choose **Choose an existing IAM role** option and select `^gluerole^` from **IAM role** drop down. click **Next**
 8. On the **Schedule** step keep the default **Run on demand** option and click **Next**
 9. On the **Output** step, choose `weblogs` database from **Database** drop down. Keep default the same and click **Next** button
 10. On the **Review all steps** step, review the selections and click **Finish**. this should take to back to **Crawlers** dashboard
@@ -874,6 +649,19 @@ CREATE TABLE IF NOT EXISTS userprofileParquet
 	FROM "weblogs"."userprofile"
 ```
 Once the query is run, you can look at the list of tables in Athena and see this table has been added, including the partitions.
+
+
+### Make your own jobs
+
+#### Geocode IPs
+
+1. If you closed the jupyter notebook, follow the steps 1-3 to reopen the notebook. From AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home" target="_blank">AWS Management Console for AWS Glue</a>.
+2. From the **Notebook Servers** menu page, Select the `aws-glue-^stackname^` notebook and click **Open Notebook** button
+3. Open the labs workbook **Exercise 4 - Lookup**
+
+#### Hash First & Last Name
+
+1. Create a transformation that shows the user profile with a hashed version of the username and password.
 
 
 #### Extra Credit - Test Role Based Access
@@ -1091,6 +879,8 @@ As part of the above exercise we saw how to create a data load pipeline using DM
 
 
 # Clean Up
+
+First, remove the Sagemaker Notebook. Once that completes you can go to the next step.
 
 Open the Cloudformation Console and delete the workshop stack. If you leave the workshop running it will continue to generate data and incur charges.
 
