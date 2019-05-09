@@ -355,7 +355,7 @@ Resources:
       RoleArn: !GetAtt SchedulerRole.Arn
       ScheduleExpression: rate(1 minute)
       Targets : 
-        - Id: !Sub ${AWS::StackName}-SchedulerRole
+        - Id: !Sub SchedulerRole
           Arn: !GetAtt WriteLogsFunction.Arn
 
   LoadSampleDataFunction:

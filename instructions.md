@@ -172,7 +172,7 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
 2. From the **Dev endpoints** menu page, selct the checbox by the '^stackname^' endpoint. click **Action** button and **Create SageMaker Notebook**.
 3. Follow the instructions in the **Create Notebook** screen.
    - Under the  **Notebook Name** step, Enter aws-glue-`^stackname^`
-   - Under the **Attack to development endpoint** drop down select datalake-^stackname^ 
+   - Under the **Attach to development endpoint** drop down select datalake-^stackname^ 
    - Select 'Choose an existing IAM Role' radio button.
    - For the IAM Role, select `^gluerole^`
    - For VPC (option), select `DataLakeVpc-^stackname^`
@@ -182,7 +182,7 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
    - Wait until the Notebook is in the 'Ready' state.
 4. Select the Notebook `aws-glue-^stackname^`, and select 'Open Notebook'. Once the notebook opens, rename the notebook and select the `New` button and choose `Terminal`. Now copy the sample notebook from your bucket into the notebook. Enter the following command into the terminal window
 ```
-aws s3 cp s3://serverless-datalake-2-ingestionbucket-ilhbu82jobwo/instructions/labs.ipynb SageMaker/labs.ipynb
+aws s3 cp s3://^ingestionbucket^/instructions/labs.ipynb SageMaker/labs.ipynb
 ```
    - Click the Jupyter icon in the upper left to return the main menu.
    - Now you should see **labs.ipynb** in the list. Click it to open and follow the instructions.
@@ -466,8 +466,6 @@ SELECT state,
 In this section we will visualize the data from the previous analysis in QuickSight. If you are new to Amazon QuickSight then you will have to sign up for QuickSight, refer to this **[Setting Up QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/setup-new-quicksight-account.html#setup-quicksight-for-existing-aws-account)** documentation to get set up to use Amazon QuickSight. If you have only one user (author or admin), you can use Amazon QuickSight for free.
 
 Once you have signed up for QuickSight successfully, the next step is to grant QuickSight permissions to your AWS resources. Please refer to **[Managing Amazon QuickSight Permissions to AWS Resources](https://docs.aws.amazon.com/quicksight/latest/user/managing-permissions.html)** documentation on how to grant these permissions.
-
-> **Note:** Please ensure that you are in US East (N. Virginia) region before you execute this lab
 
 #### Configuring Amazon QuickSight to use Amazon Athena as data source
 1. From the Amazon QuickSight dashboard console, Click on **Manage data** on the top-right corner of the webpage to review existing data sets.
