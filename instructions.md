@@ -474,21 +474,16 @@ Once you have signed up for QuickSight successfully, the next step is to grant Q
 4. On the **New Athena data source** dialog box, enter **Data source name** `weblogs-athena-datasource`
 5. Click on **Validate connection** to make sure you have the permissions to access Athena.
 6. Click **Create data source**. 
-7. Choose `weblogs` database from **Database: contain sets of tables** dropdown, all tables under `weblogs` should get listed. You can choose a table to visualize the data or create a custom SQL. In this lab we will create a custom SQL.
-8. Click **Use custom SQL** 
-
+7. Choose `weblogs` database from **Database: contain sets of tables** dropdown, all tables under `weblogs` should get listed. You can choose a table to visualize the data or create a custom SQL. In this lab we will select a table.
+8. Select 'zipcodesdata'
+9. Click **Edit/Preview data** 
+10. The Data visualizer will appear showing the zipcodes data table.
  > **Note:** In QuickSight, when creating a new data set based on a direct query to a database, you can choose an existing SQL query or create a new SQL query. You can use either an existing or new query to refine the data retrieved from a database, or to combine data from multiple tables. Using a SQL query, you can specify SQL statements in addition to any join criteria to refine the data set. If you want to join tables only by specifying the join type and the fields to use to join the tables, you can use the join interface instead. For more information about using the join interface, see [Joining Tables](https://docs.aws.amazon.com/quicksight/latest/user/joining-tables.html).
- > For this lab we will use QuickSight's join interface to create custom sql
-
- 9. On **Enter custom SQL query** dialogbox, click **Edit/Preview data** button. This should take you to the join interface page.
- 10. On the data preparation page, on the top left corner, select **Query** under **Data source** 
   
   > **Note:** SPICE is Amazon QuickSight's Super-fast, Parallel, In-memory Calculation Engine. SPICE is engineered to rapidly perform advanced calculations and serve data. By using SPICE, you save time because you don't need to retrieve the data every time you change an analysis or update a visual.
 
-  11. On the data preparation page, expand the **Schema** pane and select `weblogs` database from the drop down. This selection should populate all the tables under `weblogs` database. 
-  12. Expand the **Tables** pane and select tables `zipcodesdata`. This table is on the left when you are choosing a join type and join columns. The table appears in the join interface.
-  > If tables are not displayed then select **Select tables** option under **Tables** pane.
-  13. Select `joindatasets` from the **Tables** pane.  This table is on the right when you are choosing a join type and join columns. The table appears in the join interface and a join appears between the two tables.
+  11. Click the **Add Data** link above the zipcodesdata. 
+  13. Select `joindatasets` from the **Tables** list and click **select** The table appears in the join interface and a join appears between the two tables.
   14. Choose the join (2 red dots) to open the **Configure join** pane.
   15. Enter the join column information:
       - In the **Data sources** section of the **Configure join** pane, click on **Enter a field**, choose the join column, `zipcode` for the `zipcodesdata` table. 
