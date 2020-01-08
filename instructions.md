@@ -1,12 +1,7 @@
 # Welcome to the AWS Serverless Data Lake Workshop
 
 # Serverless Ingestion using Amazon Kinesis Firehose
-The first step in the data processing in a data lake is that data needs to land in S3.
-
-The cloud engineering team has created an extract of the user profile database and demographic data into S3. They also were able to create entries in the Glue Data Catalog for this data. They accomplished this through some scripting, but they need help ingesting the web log data from the websites. The weblogs are in a CSV format and they are unsure how to import the data into the Glue Data Catalog.
-
-The logs are to be written to CloudWatch logs, and they have configured the subscription from CloudWatch logs to Kinesis Firehose. 
-
+The first step of data processing in a data lake is to land data into S3. To help with this the cloud engineering team has created three different extracts (user activity, user profile, and zip code data) from their databases. These extracts have been placed into a S3 bucket. In addition to the extracts, a Kinesis Firehose has been set up to move web logs written to CloudWatch logs into S3. Using these data sets we will explore various ways to process data within our data lake. 
 
 ## Kinesis Firehose Delivery Steam
 Kinesis Firehose provides a fully managed stream processing service that's highly scalable and can deliver data to S3. The application teams publish the log files to cloudwatch logs via the cloudwatch agent. Currently, the logs are being published to the //^stackname^/apache CloudWatch Log Group.
@@ -60,7 +55,7 @@ You can see this configured in the CloudFormation script.
 
 The was done automatically in the lab because setting up the IAM Roles can be very tedious and time consuming.
 
-Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON format. Not only are they harder to read in a compressed JSON format, they aren't written in a JSON compliant format. Each line is a JSON file, but there aren't commas between each line so JSON parsing fails. We use a template that will run a lambda function that uncompresses the file and returns the data payload which is in a CSV format.
+Lastly, the logs written from CloudWatch to Kinesis are in a compressed JSON format. Not only are they harder to read in a compressed JSON format, they aren't written in a JSON compliant format. Each line is a JSON file, but there aren't commas between each line so JSON parsing fails. To correct for this a Firehose transform will execute a lambda function that decompresses the file and returns the data payload which is in a CSV format.
 
 </details>
 
@@ -180,7 +175,7 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
    - Select the security group that starts with '^stackname^-GlueSecurityGroup'
    - Use the defaults for KMS and click `Create Notebook`
    - Wait until the Notebook is in the 'Ready' state.
-4. Select the Notebook `aws-glue-^stackname^`, and select 'Open Notebook'. Once the notebook opens, rename the notebook and select the `New` button and choose `Terminal`. Now copy the sample notebook from your bucket into the notebook. Enter the following command into the terminal window
+4. Select the Notebook `aws-glue-^stackname^`, and select 'Open Notebook'. Once the notebook opens, select the `New` button and choose `Terminal`. Now copy the sample notebook from your bucket into the notebook by entering the following command into the terminal window
 ```
 aws s3 cp s3://^ingestionbucket^/instructions/labs.ipynb SageMaker/labs.ipynb
 ```
