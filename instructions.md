@@ -162,10 +162,12 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
 #### Steps to create glue job
  As part of this step you will create a glue job, update the default script and run the job. We will be using the AWS Management Console to create a SageMaker Jupyter notebook which will run the scripts on an AWS Glue Development Endpoint. Development endpoints provide the compute needed to run the Spark Job without having to wait until a cluster gets created to execute the code. This will reduce the feedback loops in the development and testing effort.
 
+ > **Note:** For those who have not worked with Jupyter notebooks, think of them as a Integrated Development Environment (IDE). It is simply a place you can write, annotate, and execute code. Code is organized in blocks/section and each block can be executed one at a time.
+
 1. From the AWS Management Console, in the search text box, type **AWS Glue**, select **AWS Glue** service from the filtered list to open AWS Glue console OR Open the <a href="https://console.aws.amazon.com/glue/home?region=us-east-1" target="_blank">AWS Management console for Amazon Glue</a>.
-1. From the AWS Glue dashboard left hand menu select checkbox **Dev endpoints** menu item
-2. From the **Dev endpoints** menu page, selct the checbox by the '^stackname^' endpoint. click **Action** button and **Create SageMaker Notebook**.
-3. Follow the instructions in the **Create Notebook** screen.
+2. From the AWS Glue dashboard left hand menu select checkbox **Dev endpoints** menu item
+3. From the **Dev endpoints** menu page, selct the checbox by the '^stackname^' endpoint. click **Action** button and **Create SageMaker Notebook**.
+4. Follow the instructions in the **Create Notebook** screen.
    - Under the  **Notebook Name** step, Enter aws-glue-`^stackname^`
    - Under the **Attach to development endpoint** drop down select datalake-^stackname^ 
    - Select 'Choose an existing IAM Role' radio button.
@@ -175,17 +177,16 @@ ip_address|username |timestamp | request|http | bytes |  requesttype|topdomain|t
    - Select the security group that starts with '^stackname^-GlueSecurityGroup'
    - Use the defaults for KMS and click `Create Notebook`
    - Wait until the Notebook is in the 'Ready' state.
-4. Select the Notebook `aws-glue-^stackname^`, and select 'Open Notebook'. Once the notebook opens, select the `New` button and choose `Terminal`. Now copy the sample notebook from your bucket into the notebook by entering the following command into the terminal window
+5. Select the Notebook `aws-glue-^stackname^`, and select 'Open Notebook'. Once the notebook opens, select the `New` button and choose `Terminal`. Now copy the sample notebook from your bucket into the notebook by entering the following command into the terminal window
 ```
 aws s3 cp s3://^ingestionbucket^/instructions/labs.ipynb SageMaker/labs.ipynb
 ```
-   - Click the Jupyter icon in the upper left to return the main menu.
-   - Now you should see **labs.ipynb** in the list. Click it to open and follow the instructions.
-   - Click **Run** button to run the code
-
-
-10. Once the job is succeeded, go to S3 console and browse to `s3://^ingestionbucket^/weblogs/useractivityconverted` S3 bucket
-11. Under the `useractivityconverted` S3 folder you should see Parquet files created by the job, partitioned by `toppage` column.
+5. Click the Jupyter icon in the upper left to return the main menu.
+6. Now you should see **labs.ipynb** in the list. Click it to open and follow the instructions. 
+7. Select each code block under the **Initialization** heading and click the **Run** button to run the code in each code block. **Please wait for the 1st section to complete before running the second section.**
+8. Next select the code block under the **Lab - Transform / Decode data with AWS Glue** heading and click the **Run** button. This code creates a Glue job to split apart and transform some of the data elements.
+9.  Once the job is succeeded, go to S3 console and browse to `s3://^ingestionbucket^/weblogs/useractivityconverted` S3 bucket
+10. Under the `useractivityconverted` S3 folder you should see Parquet files created by the job, partitioned by `toppage` column.
 
 #### Explore the new dataset that we created in the previous step
 
