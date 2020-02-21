@@ -51,6 +51,95 @@ Resources:
             Principal:
               Service: !Sub logs.${AWS::Region}.amazonaws.com
             Action: sts:AssumeRole
+  DataAnalystRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+              - !Sub ${AWS::AccountId}
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+            Action: sts:AssumeRole
+  DataScientistRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+              - !Sub ${AWS::AccountId}
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+            Action: sts:AssumeRole
+  DataAnalystPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'athena:StartQueryExecution'
+              - 'glue:GetPartitions'
+              - 'lakeformation:GetDataAccess'
+              - 'athena:GetQueryResults'
+              - 'athena:DeleteNamedQuery'
+              - 'athena:UpdateWorkGroup'
+              - 'athena:ListWorkGroups'
+              - 'athena:GetNamedQuery'
+              - 'lakeformation:ListPermissions'
+              - 'athena:ListQueryExecutions'
+              - 'athena:GetWorkGroup'
+              - 'athena:GetExecutionEngine'
+              - 'athena:StopQueryExecution'
+              - 'athena:GetExecutionEngines'
+              - 'athena:RunQuery'
+              - 'athena:TagResource'
+              - 'athena:UntagResource'
+              - 'lakeformation:GetEffectivePermissionsForPath'
+              - 'athena:GetQueryResultsStream'
+              - 'glue:GetTables'
+              - 'athena:DeleteWorkGroup'
+              - 'athena:GetNamespace'
+              - 'athena:GetQueryExecutions'
+              - 'glue:GetDatabases'
+              - 'athena:GetCatalogs'
+              - 'athena:CreateWorkGroup'
+              - 'athena:ListTagsForResource'
+              - 'glue:GetTable'
+              - 'athena:ListNamedQueries'
+              - 'glue:GetDatabase'
+              - 'athena:GetNamespaces'
+              - 'lakeformation:DescribeResource'
+              - 'lakeformation:ListResources'
+              - 'glue:GetPartition'
+              - 'athena:CreateNamedQuery'
+              - 'lakeformation:GetDataLakeSettings'
+              - 'athena:CancelQueryExecution'
+              - 'athena:GetQueryExecution'
+              - 'athena:GetTables'
+              - 'athena:GetTable'
+              - 'athena:BatchGetNamedQuery'
+              - 'athena:BatchGetQueryExecution'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:ListMultipartUploadParts'
+              - 's3:AbortMultipartUpload'
+              - 's3:CreateBucket'
+              - 's3:PutObject'
+            Resource: !Sub arn:aws:s3:::aws-athena-query-results-${AWS::AccountId}-${AWS::Region}/*
+      Roles:
+        - !Ref 'DataAnalystRole'
+        - !Ref 'DataScientistRole'
   LogsToKinesisRolePolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -364,14 +453,19 @@ Resources:
       Handler: index.lambda_handler
       Runtime: python2.7
       Description: ''
-      MemorySize: 512
+      MemorySize: 1536
       Timeout: 600
       Role: !GetAtt TransformKinesisFunctionRole.Arn
       Environment:
         Variables:
+          STACK_NAME: !Ref AWS::StackName
           BUCKET_NAME: !Ref IngestionBucket
           SOURCE_BUCKET_NAME: arc326-instructions
           GLUE_SVC_ROLE: !Ref GlueDevServiceRole
+          ANALYST: !Ref DataAnalystRole
+          SCIENTIST: !Ref DataScientistRole
+          LINK1: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataAnalystRole}&account=${AWS::AccountId}&displayName=DataAnalyst
+          LINK2: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataAnalystRole}&account=${AWS::AccountId}&displayName=DataScientist
       Code: 
         ZipFile: !Sub |
           import boto3
@@ -391,10 +485,16 @@ Resources:
           glue_client = boto3.client('glue')
           s3 = boto3.resource('s3')
           srcB = 'arc326-instructions'
+          bkt = os.environ['BUCKET_NAME']
+          gluerole = os.environ['GLUE_SVC_ROLE']
+          da = os.environ['ANALYST']
+          ds = os.environ['SCIENTIST']
+          l1 = os.environ['LINK1']
+          l1 = os.environ['LINK2']
 
           def lambda_handler(event, context):
               try:
-                  print("Received event: " + json.dumps(event, indent=2))    
+                  print("Recv: " + json.dumps(event, indent=2))    
                   return process_cfn(event, context)
               except Exception as e:
                   print("EXCEPTION", e)
@@ -407,15 +507,14 @@ Resources:
                       }, cfnresponse.FAILED, rData)
 
           def delete_files(event, content):
-              bkt = os.environ['BUCKET_NAME']
-              marker = ''
+              m = ''
               maxKeys = 100
 
-              isTrunc = True
+              t = True
               s3_bucket = s3_client.list_objects_v2(Bucket=bkt, MaxKeys=maxKeys)
 
-              while isTrunc:
-                  isTrunc = s3_bucket['IsTruncated']
+              while t:
+                  t = s3_bucket['IsTruncated']
                   
                   objects = []
 
@@ -431,17 +530,15 @@ Resources:
                       }
                   )
 
-                  if isTrunc:
-                      marker = s3_bucket['NextContinuationToken']
-                      s3_bucket = s3_client.list_objects_v2(Bucket=bkt, ContinuationToken=marker, MaxKeys=maxKeys)
+                  if t:
+                      m = s3_bucket['NextContinuationToken']
+                      s3_bucket = s3_client.list_objects_v2(Bucket=bkt, ContinuationToken=m, MaxKeys=maxKeys)
 
               return "Success"
 
 
 
           def process_cfn(event, context):
-              bkt = os.environ['BUCKET_NAME']
-
               response = {
                   'StackId': event['StackId'],
                   'RequestId': event['RequestId'],
@@ -456,21 +553,11 @@ Resources:
                   return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
                    
               copy_files(event, context)
-
-              glue_response = glue_client.get_dev_endpoint(EndpointName=event['ResourceProperties']['GlueDevEndpoint'])
-
-
               rData = {}
               rData['Data'] = "Create Succcessful"
-              rData['GlueYarnEndpointAddress'] = glue_response['DevEndpoint']['YarnEndpointAddress'].split('.', 3)[0]
-              rData['GluePrivateAddress'] = glue_response['DevEndpoint']['PrivateAddress'].split('.', 3)[0]
               return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
           def copy_files(event, context):
               stackName =  event['ResourceProperties']['StackName']
-
-              bkt = os.environ['BUCKET_NAME']
-              gluerole = os.environ['GLUE_SVC_ROLE']
-
               response = s3_client.copy_object(
                   Bucket=bkt,
                   CopySource={'Bucket': srcB, 'Key': 'sample-data/useractivity.csv'},
@@ -493,13 +580,13 @@ Resources:
                   CopySource={'Bucket': srcB, 'Key': 'sample-data/userprofile.csv'},
                   Key='raw/userprofile/userprofile.csv'
               )
-              replaceText(bkt, stackName, gluerole, 'instructions/instructions-template.html', 'instructions/instructions.html')
-              replaceText(bkt, stackName, gluerole, 'instructions/labs-template.ipynb', 'instructions/labs.ipynb')
+              replaceText('instructions/instructions-template.html', 'instructions/instructions.html')
+              replaceText('instructions/labs-template.ipynb', 'instructions/labs.ipynb')
 
-          def replaceText(bkt, stackName, gluerole, src, dst):
+          def replaceText(src, dst):
               src = s3.Object(srcB, src)
               html = src.get()['Body'].read().decode('utf-8') 
-              html = html.replace('^ingestionbucket^', bkt).replace('^stackname^', stackName).replace('^gluerole^', gluerole)
+              html = html.replace('^ingestionbucket^', bkt).replace('^stackname^', stackName).replace('^gluerole^', gluerole).replace('^dataanalyst^', da).replace('^datascientist^', ds).replace('^l1^', l1).replace('^l2^', l2)
               destination = s3.Object(bkt, dst)
               result = destination.put(Body=html, ACL='public-read', ContentDisposition='inline', ContentType='text/html')
               return "Success"

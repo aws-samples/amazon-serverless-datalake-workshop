@@ -545,6 +545,55 @@ Now that you have configured the data source and created the custom sql, in this
 8. Select **Aggregate:Day** to aggregate by day.
 9. Use the slider on the X-axis to explore the daily request pattern for a particular month.
 
+# Data Governance using AWS Lake Formation
+Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an AWS Lake Formation, organization can apply column-level security to make data elements accessible based on the role that accesses the data.
+
+## Lab Exercise
+1. In the AWS Console, Open **AWS Lake Formation**
+1. Under **Register and ingest** select **Data lake locations**
+1. Select **Register Location*
+1. Enter ^s3userprofile^ in the **Amazon S3 Path*
+1. Select **Register Location**
+1. In the **Permissions** section of the left-side navigation bar, select Select **Data Permissions**
+1. Click **Revoke**
+1. In the IAM Uses and roles, select **IAMAllowedPrincipals**
+1. Select **weblogs** for the database
+1. Select **userprofile** from the table dropdown.
+1. Select **Super** to revoke Super permissions from this table. 
+1. Select **Revoke**
+
+This removed the default Gleu Data Catalog permissions and will apply Lake Formation permissions to the object. Currently, no users or role have permissions, so let's create a couple.
+
+1. Click **Grant**
+1. Select **^dataanalystrole^** from the IAM users and roles list.
+1. Select **weblogs** for the database.
+1. Select **userprofile** table. 
+1. For column, select **Include columns** to permit specific columns.
+1. In the Include Columns list, choose **username**, **ip_address**, and **zip**.
+1. Table permissions: choose the **Select** option.
+1. Click Grant
+
+We will also add a data scientist role that has more permissions. This will show all the columns except the credit card number (cc)
+1. Click **Grant**
+1. Select **^datscientistrole^** from the IAM users and roles list.
+1. Select **weblogs** for the database.
+1. Select **userprofile** table. 
+1. For column, select **Exclude columns** to permit specific columns.
+1. In the Include Columns list, choose **cc**.
+1. Table permissions: choose the **Select** option.
+1. Click Grant
+
+
+Click here ^datascientistconsole^ to assume the role of the data analyst.
+1. In the AWS console, select **Amazon Athena**
+1. For the datavase, choose **weblogs**
+1. Run the following query: 
+```
+SELECT * FROM "weblogs"."userprofile" limit 10;
+```
+
+Notice only 3 columns have been returned?
+
 
 
 # Data Governance using AWS Glue
