@@ -241,7 +241,7 @@ Results for the above query look like the following:
   | ------  | 
   |	2064987 |
 
-> **Note:** The current format is CSV and this query is scanning ~675MB of data and takes ~ 3.2 seconds to execute
+> **Note:** The current format is gzipped CSV and this query is scanning ~32 MB of compressed data and takes ~ 3-6 seconds to execute
 
 
 2. Make a note of query execution time for later comparison while querying the data set in Apache Parquet format.
@@ -276,7 +276,7 @@ aaaaaahtac7 |	"GET /petstore/Dogs/DryFood" |	4
 aaaaaihrai7 |	"GET /petstore/Dogs/FoodToppers" |	13
 aaaadwdaba2 |	"GET /petstore/Dogs/FoodToppers" |	6
 
-> **Note:** The current format is CSV and this query is scanning ~675MB of data and takes ~5 seconds to execute
+> **Note:** The current format is CSV and this query is scanning ~32MB of compressed data and takes ~5 seconds to execute
 
 
 ### Querying partitioned data using Amazon Athena
@@ -552,7 +552,7 @@ Most large organizations will have different data classification tiers and a num
 1. In the AWS Console, Open **AWS Lake Formation**
 1. Under **Register and ingest** select **Data lake locations**
 1. Select **Register Location*
-1. Enter **s3://^ingestionbucket^/raw/userprofile/** in the **Amazon S3 Path*
+1. Enter **s3://^ingestionbucket^/raw/userprofile** in the **Amazon S3 Path*
 1. Select **Register Location**
 1. In the **Permissions** section of the left-side navigation bar, select Select **Data Permissions**
 1. Click **Revoke**
@@ -584,9 +584,9 @@ We will also add a data scientist role that has more permissions. This will show
 1. Click Grant
 
 
-Click here ^linkdataanalyst^ to assume the role of the data analyst.
+[Click here](^linkdataanalyst^) to assume the role of the data analyst.
 1. In the AWS console, select **Amazon Athena**
-1. For the datavase, choose **weblogs**
+1. For the database, choose **weblogs**
 1. Run the following query: 
 ```
 SELECT * FROM "weblogs"."userprofile" limit 10;
@@ -594,15 +594,18 @@ SELECT * FROM "weblogs"."userprofile" limit 10;
 
 Notice only 3 columns have been returned?
 
-Click here ^linkdatascientist^ to assume the role of the data analyst.
+[Click here](^linkdatascientist^) to assume the role of the data analyst.
 1. In the AWS console, select **Amazon Athena**
-1. For the datavase, choose **weblogs**
+1. For the database, choose **weblogs**
 1. Run the following query: 
 ```
 SELECT * FROM "weblogs"."userprofile" limit 10;
 ```
 
-Notice only 3 columns have been returned?
+Notice only the cc field is missing?
+
+1. Drop down the DataScientist in the upper right menu. (This will be next to the region)
+1. Select `Back to TeamRole` (TeamRole is the user/role you originaly logged in as)
 
 # Data Governance using AWS Glue
 Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an S3 data lake, there are several ways to protect the data and grant access to the data.

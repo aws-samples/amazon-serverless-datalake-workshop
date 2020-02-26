@@ -447,6 +447,52 @@ Resources:
         - Id: !Sub SchedulerRole
           Arn: !GetAtt WriteLogsFunction.Arn
 
+  LoadSampleData:
+    Type: Custom::LoadSampleData
+    DependsOn:
+      - IngestionBucket
+    Properties: 
+      ServiceToken: !GetAtt LoadSampleDataFunction.Arn
+      files:
+      - src: https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/lake-formation/sample-data/useractivity.gz
+        dst: raw/useractivity/useractivity.gz
+        acl: private
+        content-type: application/x-gzip
+        tokenize: N
+      - src: https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/lake-formation/sample-data/zipcodedata.csv
+        dst: raw/zipcodes/zipcodedata.csv
+        acl: private
+        content-type: text/csv
+        tokenize: N
+      - src: https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/lake-formation/sample-data/userprofile.csv
+        dst: raw/userprofile/userprofile.csv
+        acl: private
+        content-type: text/csv
+        tokenize: N
+      - src: https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/lake-formation/sample-data/profiles.json
+        dst: data-gen/profiles.json
+        acl: private
+        content-type: application/json
+        tokenize: N
+      - src: https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/lake-formation/instructions-template.html
+        dst: instructions/instructions.html
+        acl: public-read
+        content-type: text/html
+        tokenize: Y
+      - src: https://raw.githubusercontent.com/aws-samples/amazon-serverless-datalake-workshop/lake-formation/labs.ipynb
+        dst: instructions/labs.ipynb
+        acl: public-read
+        content-type: text/html
+        tokenize: Y
+      tokens:
+        stackname: !Ref AWS::StackName
+        ingestionbucket: !Ref IngestionBucket
+        gluerole: !Ref GlueDevServiceRole
+        dataanalyst: !Ref DataAnalystRole
+        datascientist: !Ref DataScientistRole
+        linkdataanalyst: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataAnalystRole}&account=${AWS::AccountId}&displayName=DataAnalyst
+        linkdatascientist: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataScientistRole}&account=${AWS::AccountId}&displayName=DataScientist
+
   LoadSampleDataFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
@@ -460,24 +506,13 @@ Resources:
         Variables:
           STACK_NAME: !Ref AWS::StackName
           BUCKET_NAME: !Ref IngestionBucket
-          SOURCE_BUCKET_NAME: arc326-instructions
-          GLUE_SVC_ROLE: !Ref GlueDevServiceRole
-          ANALYST: !Ref DataAnalystRole
-          SCIENTIST: !Ref DataScientistRole
-          LINK1: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataAnalystRole}&account=${AWS::AccountId}&displayName=DataAnalyst
-          LINK2: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataAnalystRole}&account=${AWS::AccountId}&displayName=DataScientist
       Code: 
         ZipFile: !Sub |
-          import boto3, urllib2, os, cfnresponse,json
+          import cfnresponse
+          import boto3, urllib2, os,json
 
           s3_client = boto3.client('s3')
           bkt = os.environ['BUCKET_NAME']
-          gluerole = os.environ['GLUE_SVC_ROLE']
-          da = os.environ['ANALYST']
-          ds = os.environ['SCIENTIST']
-          l1 = os.environ['LINK1']
-          l2 = os.environ['LINK2']
-          stackName = os.environ['STACK_NAME']
 
           def lambda_handler(event, context):
             try:
@@ -487,11 +522,11 @@ Resources:
                 print("EXCEPTION", e)
                 rData = {}
                 rData['Data'] = "Create Failed"
-                cfnresponse.send(event, {
+                cfnresponse.send(event, context, {
                     'StackId': event['StackId'],
                     'RequestId': event['RequestId'],
                     'LogicalResourceId': event['LogicalResourceId']
-                    }, cfnresponse.FAILED, rData)
+                    }, cfnresponse.FAILED)
 
           def delete_files(event, content):
             t = True
@@ -529,19 +564,18 @@ Resources:
               rData['Data'] = "Create Succcessful"
             return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
             
-          def copy_file(src, dst, acl, ct, replace):
-            data = urllib2.urlopen(os.environ['GITHUB'] + src).read()
-            if replace:
-                data = data.replace('^ingestionbucket^', bkt).replace('^stackname^', stackName).replace('^gluerole^', gluerole).replace('^dataanalyst^', da).replace('^datascientist^', ds).replace('^l1^', l1).replace('^l2^', l2)
-            response = s3_client.put_object(Bucket=bkt, Key=dst, Body=data, ACL=acl, ContentDisposition='inline', ContentType=ct)
+          def copy_file(event, file):
+            data = urllib2.urlopen(file["src"]).read()
+            
+            if file["tokenize"] == "Y":
+              for token in event["ResourceProperties"]["tokens"]:
+                data = data.replace('^' + token + '^', event["ResourceProperties"]["tokens"][token]).replace('href="%5E' + token + '%5E', 'target="' + token + '" href="' + event["ResourceProperties"]["tokens"][token])
+            response = s3_client.put_object(Bucket=bkt, Key=file["dst"], Body=data, ACL=file["acl"], ContentDisposition='inline', ContentType=file["content-type"])
 
           def copy_files(event, context):
-            copy_file('/sample-data/useractivity.gz','raw/useractivity/useractivity.gz', 'private', 'application/x-gzip', False)
-            copy_file('/sample-data/zipcodedata.csv','raw/zipcodes/zipcodedata.csv', 'private', 'text/csv', False)
-            copy_file('/sample-data/profiles.json','data-gen/profiles.json', 'private', 'application/json', False)
-            copy_file('/sample-data/userprofile.csv','raw/userprofile/userprofile.csv', 'private', 'text/csv', False)
-            copy_file('/instructions-template.html','instructions/instructions.html', 'public-read', 'text/csv', True)
-            copy_file('/labs.ipynb','instructions/labs.ipynb', 'public-read', 'text/csv', True)
+            for file in event["ResourceProperties"]["files"]:
+              copy_file(event, file)
+
 
   VPC:
     Type: AWS::EC2::VPC
@@ -732,16 +766,6 @@ Resources:
     Properties: 
       Roles:
         - !Ref GlueDevServiceRole 
-
-  LoadSampleData:
-    Type: Custom::LoadSampleData
-    DependsOn:
-      - IngestionBucket
-    Properties: 
-      ServiceToken: !GetAtt LoadSampleDataFunction.Arn
-      StackName: !Ref AWS::StackName
-      GlueDevEndpoint: !Ref GlueDevEndpoint
-
 Outputs:
   RedshiftRole:
     Description: The role that redshift uses to access data

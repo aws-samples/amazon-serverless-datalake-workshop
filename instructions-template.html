@@ -540,7 +540,7 @@ Below are the datasets that we will be working with:</p>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Note:</strong> The current format is CSV and this query is scanning ~675MB of data and takes ~ 3.2 seconds to execute</p>
+<p><strong>Note:</strong> The current format is gzipped CSV and this query is scanning ~32 MB of compressed data and takes ~ 3-6 seconds to execute</p>
 </blockquote>
 <ol start="2">
 <li>Make a note of query execution time for later comparison while querying the data set in Apache Parquet format.</li>
@@ -592,7 +592,7 @@ Below are the datasets that we will be working with:</p>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Note:</strong> The current format is CSV and this query is scanning ~675MB of data and takes ~5 seconds to execute</p>
+<p><strong>Note:</strong> The current format is CSV and this query is scanning ~32MB of compressed data and takes ~5 seconds to execute</p>
 </blockquote>
 <h3>
 <a id="user-content-querying-partitioned-data-using-amazon-athena" class="anchor" href="#querying-partitioned-data-using-amazon-athena" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Querying partitioned data using Amazon Athena</h3>
@@ -1045,7 +1045,7 @@ TBLPROPERTIES (<span class="pl-s"><span class="pl-pds">"</span>skip.header.line.
 </li>
 <li>Select *<em>Register Location</em>
 </li>
-<li>Enter <strong>s3://^ingestionbucket^/raw/userprofile/</strong> in the *<em>Amazon S3 Path</em>
+<li>Enter <strong>s3://^ingestionbucket^/raw/userprofile</strong> in the *<em>Amazon S3 Path</em>
 </li>
 <li>Select <strong>Register Location</strong>
 </li>
@@ -1089,7 +1089,7 @@ TBLPROPERTIES (<span class="pl-s"><span class="pl-pds">"</span>skip.header.line.
 <ol>
 <li>In the AWS console, select <strong>Amazon Athena</strong>
 </li>
-<li>For the datavase, choose <strong>weblogs</strong>
+<li>For the database, choose <strong>weblogs</strong>
 </li>
 <li>Run the following query:</li>
 </ol>
@@ -1100,13 +1100,17 @@ TBLPROPERTIES (<span class="pl-s"><span class="pl-pds">"</span>skip.header.line.
 <ol>
 <li>In the AWS console, select <strong>Amazon Athena</strong>
 </li>
-<li>For the datavase, choose <strong>weblogs</strong>
+<li>For the database, choose <strong>weblogs</strong>
 </li>
 <li>Run the following query:</li>
 </ol>
 <pre><code>SELECT * FROM "weblogs"."userprofile" limit 10;
 </code></pre>
-<p>Notice only 3 columns have been returned?</p>
+<p>Notice only the cc field is missing?</p>
+<ol>
+<li>Drop down the DataScientist in the upper right menu. (This will be next to the region)</li>
+<li>Select <code>Back to TeamRole</code> (TeamRole is the user/role you originaly logged in as)</li>
+</ol>
 <h1>
 <a id="user-content-data-governance-using-aws-glue" class="anchor" href="#data-governance-using-aws-glue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data Governance using AWS Glue</h1>
 <p>Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an S3 data lake, there are several ways to protect the data and grant access to the data.</p>
