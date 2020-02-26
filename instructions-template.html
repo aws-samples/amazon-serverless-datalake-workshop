@@ -1034,6 +1034,69 @@ TBLPROPERTIES (<span class="pl-s"><span class="pl-pds">"</span>skip.header.line.
 <li>Use the slider on the X-axis to explore the daily request pattern for a particular month.</li>
 </ol>
 <h1>
+<a id="user-content-data-governance-using-aws-lake-formation" class="anchor" href="#data-governance-using-aws-lake-formation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data Governance using AWS Lake Formation</h1>
+<p>Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an AWS Lake Formation, organization can apply column-level security to make data elements accessible based on the role that accesses the data.</p>
+<h2>
+<a id="user-content-lab-exercise" class="anchor" href="#lab-exercise" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Lab Exercise</h2>
+<ol>
+<li>In the AWS Console, Open <strong>AWS Lake Formation</strong>
+</li>
+<li>Under <strong>Register and ingest</strong> select <strong>Data lake locations</strong>
+</li>
+<li>Select *<em>Register Location</em>
+</li>
+<li>Enter <strong>s3://^ingestionbucket^/raw/userprofile/</strong> in the *<em>Amazon S3 Path</em>
+</li>
+<li>Select <strong>Register Location</strong>
+</li>
+<li>In the <strong>Permissions</strong> section of the left-side navigation bar, select Select <strong>Data Permissions</strong>
+</li>
+<li>Click <strong>Revoke</strong>
+</li>
+<li>In the IAM Uses and roles, select <strong>IAMAllowedPrincipals</strong>
+</li>
+<li>Select <strong>weblogs</strong> for the database</li>
+<li>Select <strong>userprofile</strong> from the table dropdown.</li>
+<li>Select <strong>Super</strong> to revoke Super permissions from this table.</li>
+<li>Select <strong>Revoke</strong>
+</li>
+</ol>
+<p>This removed the default Gleu Data Catalog permissions and will apply Lake Formation permissions to the object. Currently, no users or role have permissions, so let's create a couple.</p>
+<ol>
+<li>Click <strong>Grant</strong>
+</li>
+<li>Select <strong>^dataanalyst^</strong> from the IAM users and roles list.</li>
+<li>Select <strong>weblogs</strong> for the database.</li>
+<li>Select <strong>userprofile</strong> table.</li>
+<li>For column, select <strong>Include columns</strong> to permit specific columns.</li>
+<li>In the Include Columns list, choose <strong>username</strong>, <strong>ip_address</strong>, and <strong>zip</strong>.</li>
+<li>Table permissions: choose the <strong>Select</strong> option.</li>
+<li>Click Grant</li>
+</ol>
+<p>We will also add a data scientist role that has more permissions. This will show all the columns except the credit card number (cc)</p>
+<ol>
+<li>Click <strong>Grant</strong>
+</li>
+<li>Select <strong>^datascientist^</strong> from the IAM users and roles list.</li>
+<li>Select <strong>weblogs</strong> for the database.</li>
+<li>Select <strong>userprofile</strong> table.</li>
+<li>For column, select <strong>Exclude columns</strong> to permit specific columns.</li>
+<li>In the Include Columns list, choose <strong>cc</strong>.</li>
+<li>Table permissions: choose the <strong>Select</strong> option.</li>
+<li>Click Grant</li>
+</ol>
+<p>Click here ^l1^ to assume the role of the data analyst.</p>
+<ol>
+<li>In the AWS console, select <strong>Amazon Athena</strong>
+</li>
+<li>For the datavase, choose <strong>weblogs</strong>
+</li>
+<li>Run the following query:</li>
+</ol>
+<pre><code>SELECT * FROM "weblogs"."userprofile" limit 10;
+</code></pre>
+<p>Notice only 3 columns have been returned?</p>
+<h1>
 <a id="user-content-data-governance-using-aws-glue" class="anchor" href="#data-governance-using-aws-glue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data Governance using AWS Glue</h1>
 <p>Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an S3 data lake, there are several ways to protect the data and grant access to the data.</p>
 <p>The first layer will be to use IAM policies to grant access to IAM principles to the data in the S3 bucket. This is done with S3 bucket policies and IAM policies attached to IAM users, groups, and roles.</p>
@@ -1041,7 +1104,7 @@ TBLPROPERTIES (<span class="pl-s"><span class="pl-pds">"</span>skip.header.line.
 <p>The second approach is to protect the data at the serving layer, which may be through an EMR cluster or Redshift cluster. With EMR, the cluster can authenticate users using Kerberos and Redshift can be authenticated using Redshift users or IAM credentials.</p>
 <p>Finally, the Business Intelligence (BI) tier can authenticate users and limit visibility to reports and dashboards based on the user's group membership.</p>
 <h2>
-<a id="user-content-lab-exercise" class="anchor" href="#lab-exercise" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Lab Exercise</h2>
+<a id="user-content-lab-exercise-1" class="anchor" href="#lab-exercise-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Lab Exercise</h2>
 <p>It is common to have multiple classifications of data in the same table. One column will be more restricted than another. Because authorization in S3 is at the file level, you will need to separate out the restricted data from the less restricted data.</p>
 <p>One solution to this problem creates two tables: one contains just the less sensitive data and other contains the full dataset. In the less sensitive dataset, we have the customer id, age, and a hash of the social security number. This will allow the Ecommerce analytics team to run demographic analytics on the profiles and aggregate profiles of the same person via the hashed SSN.</p>
 <p>The CustomerRestricted table will contain all of the columns.</p>

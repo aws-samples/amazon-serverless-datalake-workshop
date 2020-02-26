@@ -552,7 +552,7 @@ Most large organizations will have different data classification tiers and a num
 1. In the AWS Console, Open **AWS Lake Formation**
 1. Under **Register and ingest** select **Data lake locations**
 1. Select **Register Location*
-1. Enter ^s3userprofile^ in the **Amazon S3 Path*
+1. Enter **s3://^ingestionbucket^/raw/userprofile/** in the **Amazon S3 Path*
 1. Select **Register Location**
 1. In the **Permissions** section of the left-side navigation bar, select Select **Data Permissions**
 1. Click **Revoke**
@@ -565,7 +565,7 @@ Most large organizations will have different data classification tiers and a num
 This removed the default Gleu Data Catalog permissions and will apply Lake Formation permissions to the object. Currently, no users or role have permissions, so let's create a couple.
 
 1. Click **Grant**
-1. Select **^dataanalystrole^** from the IAM users and roles list.
+1. Select **^dataanalyst^** from the IAM users and roles list.
 1. Select **weblogs** for the database.
 1. Select **userprofile** table. 
 1. For column, select **Include columns** to permit specific columns.
@@ -575,7 +575,7 @@ This removed the default Gleu Data Catalog permissions and will apply Lake Forma
 
 We will also add a data scientist role that has more permissions. This will show all the columns except the credit card number (cc)
 1. Click **Grant**
-1. Select **^datscientistrole^** from the IAM users and roles list.
+1. Select **^datascientist^** from the IAM users and roles list.
 1. Select **weblogs** for the database.
 1. Select **userprofile** table. 
 1. For column, select **Exclude columns** to permit specific columns.
@@ -584,7 +584,7 @@ We will also add a data scientist role that has more permissions. This will show
 1. Click Grant
 
 
-Click here ^datascientistconsole^ to assume the role of the data analyst.
+Click here ^l1^ to assume the role of the data analyst.
 1. In the AWS console, select **Amazon Athena**
 1. For the datavase, choose **weblogs**
 1. Run the following query: 

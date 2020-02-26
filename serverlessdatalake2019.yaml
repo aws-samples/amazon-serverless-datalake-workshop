@@ -468,128 +468,80 @@ Resources:
           LINK2: !Sub https://signin.aws.amazon.com/switchrole?roleName=${DataAnalystRole}&account=${AWS::AccountId}&displayName=DataScientist
       Code: 
         ZipFile: !Sub |
-          import boto3
-          import random
-          import string
-          import uuid
-          import httplib
-          import urlparse
-          import json
-          import base64
-          import hashlib
-          import os
-          import cfnresponse
-
+          import boto3, urllib2, os, cfnresponse,json
 
           s3_client = boto3.client('s3')
-          glue_client = boto3.client('glue')
-          s3 = boto3.resource('s3')
-          srcB = 'arc326-instructions'
           bkt = os.environ['BUCKET_NAME']
           gluerole = os.environ['GLUE_SVC_ROLE']
           da = os.environ['ANALYST']
           ds = os.environ['SCIENTIST']
           l1 = os.environ['LINK1']
-          l1 = os.environ['LINK2']
+          l2 = os.environ['LINK2']
+          stackName = os.environ['STACK_NAME']
 
           def lambda_handler(event, context):
-              try:
-                  print("Recv: " + json.dumps(event, indent=2))    
-                  return process_cfn(event, context)
-              except Exception as e:
-                  print("EXCEPTION", e)
-                  rData = {}
-                  rData['Data'] = "Create Failed"
-                  cfnresponse.send(event, {
-                      'StackId': event['StackId'],
-                      'RequestId': event['RequestId'],
-                      'LogicalResourceId': event['LogicalResourceId']
-                      }, cfnresponse.FAILED, rData)
+            try:
+                print("Recv: " + json.dumps(event, indent=2))    
+                return process_cfn(event, context)
+            except Exception as e:
+                print("EXCEPTION", e)
+                rData = {}
+                rData['Data'] = "Create Failed"
+                cfnresponse.send(event, {
+                    'StackId': event['StackId'],
+                    'RequestId': event['RequestId'],
+                    'LogicalResourceId': event['LogicalResourceId']
+                    }, cfnresponse.FAILED, rData)
 
           def delete_files(event, content):
-              m = ''
-              maxKeys = 100
+            t = True
+            s3_bucket = s3_client.list_objects_v2(Bucket=bkt, MaxKeys=100)
+            while t:
+                objects = [{'Key': x['Key']} for x in s3_bucket['Contents']]
 
-              t = True
-              s3_bucket = s3_client.list_objects_v2(Bucket=bkt, MaxKeys=maxKeys)
+                response = s3_client.delete_objects(
+                    Bucket=bkt,
+                    Delete={
+                        'Objects': objects,
+                        'Quiet': True
+                    }
+                )
+                t = s3_bucket['IsTruncated']
+                if t:
+                  s3_bucket = s3_client.list_objects_v2(Bucket=bkt, ContinuationToken=s3_bucket['NextContinuationToken'], MaxKeys=100)
 
-              while t:
-                  t = s3_bucket['IsTruncated']
-                  
-                  objects = []
-
-                  for obj in s3_bucket['Contents'] :
-                      objects.append({"Key": obj["Key"]})
-
-
-                  response = s3_client.delete_objects(
-                      Bucket=bkt,
-                      Delete={
-                          'Objects': objects,
-                          'Quiet': True
-                      }
-                  )
-
-                  if t:
-                      m = s3_bucket['NextContinuationToken']
-                      s3_bucket = s3_client.list_objects_v2(Bucket=bkt, ContinuationToken=m, MaxKeys=maxKeys)
-
-              return "Success"
-
-
-
+            return "Success"
+            
           def process_cfn(event, context):
-              response = {
-                  'StackId': event['StackId'],
-                  'RequestId': event['RequestId'],
-                  'LogicalResourceId': event['LogicalResourceId'],
-                  'Status': 'IN_PROCESS',
-              }
+            response = {
+                'StackId': event['StackId'],
+                'RequestId': event['RequestId'],
+                'LogicalResourceId': event['LogicalResourceId'],
+                'Status': 'IN_PROCESS',
+            }
 
-              if event['RequestType'] == 'Delete':
-                  delete_files(event, context)
-                  rData = {}
-                  rData['Data'] = "Delete Succcessful"
-                  return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
-                   
+            rData = {}
+            if event['RequestType'] == 'Delete':
+              delete_files(event, context)
+              rData['Data'] = "Delete Succcessful"
+            else:     
               copy_files(event, context)
-              rData = {}
               rData['Data'] = "Create Succcessful"
-              return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
+            return cfnresponse.send(event, context, cfnresponse.SUCCESS, rData)
+            
+          def copy_file(src, dst, acl, ct, replace):
+            data = urllib2.urlopen(os.environ['GITHUB'] + src).read()
+            if replace:
+                data = data.replace('^ingestionbucket^', bkt).replace('^stackname^', stackName).replace('^gluerole^', gluerole).replace('^dataanalyst^', da).replace('^datascientist^', ds).replace('^l1^', l1).replace('^l2^', l2)
+            response = s3_client.put_object(Bucket=bkt, Key=dst, Body=data, ACL=acl, ContentDisposition='inline', ContentType=ct)
+
           def copy_files(event, context):
-              stackName =  event['ResourceProperties']['StackName']
-              response = s3_client.copy_object(
-                  Bucket=bkt,
-                  CopySource={'Bucket': srcB, 'Key': 'sample-data/useractivity.csv'},
-                  Key='raw/useractivity/useractivity.csv'
-              )
-
-              response = s3_client.copy_object(
-                  Bucket=bkt,
-                  CopySource={'Bucket': srcB, 'Key': 'sample-data/zipcodedata.csv'},
-                  Key='raw/zipcodes/zipcodedata.csv'
-              )
-              response = s3_client.copy_object(
-                  Bucket=bkt,
-                  ACL='public-read',
-                  CopySource={'Bucket': srcB, 'Key': 'data-gen/profiles.json'},
-                  Key='data-gen/profiles.json'
-              )
-              response = s3_client.copy_object(
-                  Bucket=bkt,
-                  CopySource={'Bucket': srcB, 'Key': 'sample-data/userprofile.csv'},
-                  Key='raw/userprofile/userprofile.csv'
-              )
-              replaceText('instructions/instructions-template.html', 'instructions/instructions.html')
-              replaceText('instructions/labs-template.ipynb', 'instructions/labs.ipynb')
-
-          def replaceText(src, dst):
-              src = s3.Object(srcB, src)
-              html = src.get()['Body'].read().decode('utf-8') 
-              html = html.replace('^ingestionbucket^', bkt).replace('^stackname^', stackName).replace('^gluerole^', gluerole).replace('^dataanalyst^', da).replace('^datascientist^', ds).replace('^l1^', l1).replace('^l2^', l2)
-              destination = s3.Object(bkt, dst)
-              result = destination.put(Body=html, ACL='public-read', ContentDisposition='inline', ContentType='text/html')
-              return "Success"
+            copy_file('/sample-data/useractivity.gz','raw/useractivity/useractivity.gz', 'private', 'application/x-gzip', False)
+            copy_file('/sample-data/zipcodedata.csv','raw/zipcodes/zipcodedata.csv', 'private', 'text/csv', False)
+            copy_file('/sample-data/profiles.json','data-gen/profiles.json', 'private', 'application/json', False)
+            copy_file('/sample-data/userprofile.csv','raw/userprofile/userprofile.csv', 'private', 'text/csv', False)
+            copy_file('/instructions-template.html','instructions/instructions.html', 'public-read', 'text/csv', True)
+            copy_file('/labs.ipynb','instructions/labs.ipynb', 'public-read', 'text/csv', True)
 
   VPC:
     Type: AWS::EC2::VPC
