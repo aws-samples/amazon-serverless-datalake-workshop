@@ -584,7 +584,7 @@ We will also add a data scientist role that has more permissions. This will show
 1. Click Grant
 
 
-Click here ^l1^ to assume the role of the data analyst.
+Click here ^linkdataanalyst^ to assume the role of the data analyst.
 1. In the AWS console, select **Amazon Athena**
 1. For the datavase, choose **weblogs**
 1. Run the following query: 
@@ -594,7 +594,15 @@ SELECT * FROM "weblogs"."userprofile" limit 10;
 
 Notice only 3 columns have been returned?
 
+Click here ^linkdatascientist^ to assume the role of the data analyst.
+1. In the AWS console, select **Amazon Athena**
+1. For the datavase, choose **weblogs**
+1. Run the following query: 
+```
+SELECT * FROM "weblogs"."userprofile" limit 10;
+```
 
+Notice only 3 columns have been returned?
 
 # Data Governance using AWS Glue
 Most large organizations will have different data classification tiers and a number of roles that have access to different classifications of data. With an S3 data lake, there are several ways to protect the data and grant access to the data.
