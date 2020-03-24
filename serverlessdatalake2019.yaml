@@ -1,5 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: A serverless datalake workshop.
+Parameters: 
+  UseEventEngine: 
+    Type: String
+    Default: N
+    AllowedValues: 
+      - Y
+      - N
+    Description: This parameter is used to if you are using the Event Engine to run the lab at an AWS event. If you don't know what this means, set the value to N
+Conditions: 
+  UsesEventEngine: !Equals [ !Ref UseEventEngine, Y ]
 Resources:
   IngestionBucket:
     Type: AWS::S3::Bucket
@@ -61,7 +71,10 @@ Resources:
             Principal:
               AWS:
               - !Sub ${AWS::AccountId}
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+              - !If
+                - UsesEventEngine
+                - !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+                - !Ref "AWS::NoValue"
             Action: sts:AssumeRole
   DataScientistRole:
     Type: AWS::IAM::Role
@@ -73,7 +86,10 @@ Resources:
             Principal:
               AWS:
               - !Sub ${AWS::AccountId}
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+              - !If
+                - UsesEventEngine
+                - !Sub arn:aws:iam::${AWS::AccountId}:role/TeamRole
+                - !Ref "AWS::NoValue"
             Action: sts:AssumeRole
   DataAnalystPolicy:
     Type: AWS::IAM::ManagedPolicy
